@@ -433,7 +433,7 @@ main() {
     echo -e "\n${BOLD}${BLUE}"
     echo "  ╔══════════════════════════════════════════════╗"
     echo "  ║   Gateway Setup Script                       ║"
-    echo "  ║    Raspberry Pi / Orange Pi  /               ║"
+    echo "  ║   Raspberry Pi / Orange Pi                   ║"
     echo "  ║   Ubuntu 24.04 / Debian 12                   ║"
     echo "  ║   FH Technikum Wien — IT Security Lab 2026   ║"
     echo "  ╚══════════════════════════════════════════════╝"
