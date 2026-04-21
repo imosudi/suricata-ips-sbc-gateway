@@ -434,7 +434,7 @@ main() {
     echo "  ╔══════════════════════════════════════════════╗"
     echo "  ║   Gateway Setup Script                       ║"
     echo "  ║    Raspberry Pi / Orange Pi  /               ║"
-            ║   Ubuntu 24.04 / Debian 12                   ║"
+    echo "  ║   Ubuntu 24.04 / Debian 12                   ║"
     echo "  ║   FH Technikum Wien — IT Security Lab 2026   ║"
     echo "  ╚══════════════════════════════════════════════╝"
     echo -e "${RESET}"
