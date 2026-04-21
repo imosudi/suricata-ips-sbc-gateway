@@ -138,8 +138,7 @@ install_packages() {
         iptables \
         iptables-persistent \
         netfilter-persistent \
-        isc-dhcp-server \
-        systemd-resolved
+        isc-dhcp-server 
     log_ok "All packages installed"
 }
 
