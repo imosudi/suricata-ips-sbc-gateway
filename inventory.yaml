@@ -1,7 +1,13 @@
+# inventory.yaml - Ansible inventory file for managing the target host
 all:
   hosts:
-    10.160.240.70:
-      ansible_user: orangepi
+    #"{{ lookup('ansible.builtin.env', 'TARGET_IP', default='10.160.240.70') }}":
+    "{{ lookup('ansible.builtin.env', 'TARGET_IP') }}":
+      #ansible_user:  "{{ lookup('ansible.builtin.env', 'ANSIBLE_USER', default='orangepi') }}"
+      ansible_user:  "{{ lookup('ansible.builtin.env', 'ANSIBLE_USER') }}"
       ansible_become: yes
       ansible_connection: ssh
       ansible_python_interpreter: /usr/bin/python3
+
+
+
