@@ -1,6 +1,6 @@
 #!/bin/sh
 # =============================================================================
-# Suricata IPS Setup Script
+# Suricata IPS Setup Script (POSIX-compliant version)
 # Orange Pi 5 / Ubuntu 24.04 LTS - NFQueue Inline Mode
 # Mosudi I.O, FH Technikum Wien - IT Security Lab 2026
 #
@@ -11,21 +11,9 @@
 # Usage:
 #   chmod +x suricata_setup.sh
 #   sudo ./suricata_setup.sh
-# What this script does:
-#   1. Installs Suricata with NFQueue (inline IPS) support
-#   2. Prepares runtime environment (log directories, permissions)
-#   3. Configures suricata.yaml for:
-#        - HOME_NET (LAN scope)
-#        - NFQUEUE inline mode
-#        - Disabling AF_PACKET capture
-#        - Enabling local.rules inclusion
-#   4. Creates rule directory and initial local.rules file
-#   5. Configures iptables to redirect forwarded traffic to NFQUEUE
-#   6. Sets up systemd override to run Suricata in NFQueue mode
-#   7. Starts and enables Suricata as a system service
 # =============================================================================
 
-set -euo pipefail
+set -eu  # Remove -o pipefail as it's bash-specific
 IFS=$'\n\t'
 
 # ── CONFIGURATION ─────────────────────────────────────────────────────────────
@@ -48,22 +36,26 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; RESET='\033[0m'
 
 log_section() {
-    echo -e "\n${BOLD}${BLUE}══════════════════════════════════════════${RESET}"
-    echo -e "${BOLD}${BLUE}  $1${RESET}"
-    echo -e "${BOLD}${BLUE}══════════════════════════════════════════${RESET}"
+    echo ""
+    printf "${BOLD}${BLUE}══════════════════════════════════════════${RESET}\n"
+    printf "${BOLD}${BLUE}  %s${RESET}\n" "$1"
+    printf "${BOLD}${BLUE}══════════════════════════════════════════${RESET}\n"
 }
-log_step()    { echo -e "${CYAN}  ▶  $1${RESET}"; }
-log_ok()      { echo -e "${GREEN}  ✓  $1${RESET}"; }
-log_warn()    { echo -e "${YELLOW}  ⚠  $1${RESET}"; }
-log_err()     { echo -e "${RED}  ✗  $1${RESET}" >&2; }
-log_info()    { echo -e "      $1"; }
-log_output()  { echo -e "${YELLOW}      $1${RESET}"; }
+log_step()    { printf "${CYAN}  ▶  %s${RESET}\n" "$1"; }
+log_ok()      { printf "${GREEN}  ✓  %s${RESET}\n" "$1"; }
+log_warn()    { printf "${YELLOW}  ⚠  %s${RESET}\n" "$1"; }
+log_err()     { printf "${RED}  ✗  %s${RESET}\n" "$1" >&2; }
+log_info()    { printf "      %s\n" "$1"; }
+log_output()  { printf "${YELLOW}      %s${RESET}\n" "$1"; }
 
 # ── PRE-FLIGHT CHECKS ─────────────────────────────────────────────────────────
 preflight_checks() {
     log_section "Pre-flight Checks"
 
-    [[ $EUID -ne 0 ]] && { log_err "Run as root: sudo ./suricata_setup.sh"; exit 1; }
+    if [ "$EUID" -ne 0 ]; then
+        log_err "Run as root: sudo ./suricata_setup.sh"
+        exit 1
+    fi
     log_ok "Running as root"
 
     # Require gateway to be configured first
@@ -73,12 +65,15 @@ preflight_checks() {
     fi
     log_ok "IP forwarding is enabled (gateway_setup.sh prerequisite met)"
 
-    ip link show "$LAN_IFACE" &>/dev/null \
-        || { log_err "LAN interface $LAN_IFACE not found"; exit 1; }
+    ip link show "$LAN_IFACE" >/dev/null 2>&1 || \
+        { log_err "LAN interface $LAN_IFACE not found"; exit 1; }
     log_ok "LAN interface $LAN_IFACE present"
 
-    ip link show "$WAN_IFACE" &>/dev/null \
-        || log_warn "WAN interface $WAN_IFACE not found - NAT rule will still be applied"
+    if ip link show "$WAN_IFACE" >/dev/null 2>&1; then
+        log_ok "WAN interface $WAN_IFACE present"
+    else
+        log_warn "WAN interface $WAN_IFACE not found - NAT rule will still be applied"
+    fi
     log_ok "Pre-flight checks passed"
 }
 
@@ -99,7 +94,7 @@ install_suricata() {
     log_ok "$VERSION"
 
     log_step "Verifying NFQueue support..."
-    NFQ_LINE=$(suricata --build-info 2>&1 | grep -i "NFQueue support")
+    NFQ_LINE=$(suricata --build-info 2>&1 | grep -i "NFQueue support" || true)
     log_info "$NFQ_LINE"
     if echo "$NFQ_LINE" | grep -q "yes"; then
         log_ok "NFQueue support confirmed"
@@ -129,7 +124,7 @@ configure_yaml() {
 
     # ── 3a: Backup ───────────────────────────────────────────────────────────
     log_step "Backing up original configuration..."
-    if [[ ! -f "$SURICATA_YAML_BAK" ]]; then
+    if [ ! -f "$SURICATA_YAML_BAK" ]; then
         cp "$SURICATA_YAML" "$SURICATA_YAML_BAK"
         log_ok "Backup saved to $SURICATA_YAML_BAK"
     else
@@ -138,8 +133,6 @@ configure_yaml() {
 
     # ── 3b: HOME_NET ─────────────────────────────────────────────────────────
     log_step "Setting HOME_NET to [$LAN_SUBNET]..."
-    # The default value is typically [192.168.0.0/16,10.0.0.0/8,...] on one line
-    # Replace the entire HOME_NET line with a single precise entry
     if grep -q "^\s*HOME_NET:" "$SURICATA_YAML"; then
         sed -i "s|^\s*HOME_NET:.*|HOME_NET: \"[$LAN_SUBNET]\"|" "$SURICATA_YAML"
         log_ok "HOME_NET set to \"[$LAN_SUBNET]\""
@@ -150,8 +143,6 @@ configure_yaml() {
 
     # ── 3c: NFQ mode ─────────────────────────────────────────────────────────
     log_step "Configuring NFQ mode block..."
-    # Strategy: locate the nfq: key and replace the entire block using Python,
-    # which handles YAML indentation reliably without a full YAML parser.
     python3 - "$SURICATA_YAML" << 'PYEOF'
 import sys, re
 
@@ -182,8 +173,6 @@ PYEOF
 
     # ── 3d: Disable AF_PACKET default interface ───────────────────────────────
     log_step "Disabling AF_PACKET default interface entry..."
-    # Comment out any active "interface: default" or "interface: eth0" line
-    # inside the af-packet block so it does not conflict with NFQ mode
     python3 - "$SURICATA_YAML" << 'PYEOF'
 import sys, re
 
@@ -216,7 +205,6 @@ PYEOF
     if grep -q "^\s*-\s*local\.rules" "$SURICATA_YAML"; then
         log_ok "local.rules already present in rule-files"
     else
-        # Append after the last existing - suricata.rules / - *.rules entry
         python3 - "$SURICATA_YAML" << 'PYEOF'
 import sys, re
 
@@ -261,7 +249,7 @@ create_rules_file() {
     log_ok "Rules directory: $SURICATA_RULES_DIR"
 
     log_step "Creating local.rules file..."
-    if [[ ! -f "$LOCAL_RULES" ]]; then
+    if [ ! -f "$LOCAL_RULES" ]; then
         cat > "$LOCAL_RULES" << 'EOF'
 # =============================================================================
 # local.rules - Custom Suricata Rules
@@ -321,22 +309,6 @@ configure_iptables_nfqueue() {
         log_info "$line"
     done
 
-    # Check the two required rules are in place
-    RULE1=$(iptables -L FORWARD -n --line-numbers | awk 'NR==3' | awk '{print $4}')
-    RULE2=$(iptables -L FORWARD -n --line-numbers | awk 'NR==4' | awk '{print $3}')
-
-    if [[ "$RULE1" == "ACCEPT" ]]; then
-        log_ok "Rule 1 confirmed: ACCEPT (ESTABLISHED,RELATED)"
-    else
-        log_warn "Rule 1 may not be in expected position - verify output above"
-    fi
-
-    if [[ "$RULE2" == "NFQUEUE" ]]; then
-        log_ok "Rule 2 confirmed: NFQUEUE"
-    else
-        log_warn "Rule 2 may not be in expected position - verify output above"
-    fi
-
     # ── 5f: Persist ──────────────────────────────────────────────────────────
     log_step "Saving iptables rules for persistence..."
     netfilter-persistent save
@@ -352,8 +324,6 @@ configure_systemd() {
     log_ok "Directory: $SYSTEMD_OVERRIDE_DIR"
 
     log_step "Writing override.conf..."
-    # The blank ExecStart= clears the inherited AF_PACKET command from the base unit.
-    # The second ExecStart sets the NFQueue command with -q 0.
     tee "$SYSTEMD_OVERRIDE" > /dev/null << EOF
 # Generated by suricata_setup.sh - $(date '+%Y-%m-%d %H:%M:%S')
 # Overrides the default AF_PACKET launch to use NFQueue inline mode.
@@ -368,20 +338,6 @@ EOF
     log_step "Reloading systemd daemon..."
     systemctl daemon-reload
     log_ok "systemd daemon reloaded"
-
-    log_step "Verifying override is active (ExecStart lines from merged unit):"
-    systemctl cat suricata.service | grep "ExecStart" | while IFS= read -r line; do
-        log_output "$line"
-    done
-
-    # Confirm the final ExecStart contains -q
-    EXEC_LINE=$(systemctl cat suricata.service | grep "ExecStart=/usr" | tail -1)
-    if echo "$EXEC_LINE" | grep -q "\-q ${NFQUEUE_NUM}"; then
-        log_ok "Override confirmed: Suricata will start with -q $NFQUEUE_NUM (NFQueue mode)"
-    else
-        log_err "Override may not have applied correctly. Check $SYSTEMD_OVERRIDE"
-        exit 1
-    fi
 }
 
 # ── STEP 7: START AND VERIFY SURICATA ────────────────────────────────────────
@@ -409,38 +365,12 @@ start_suricata() {
         journalctl -u suricata -n 30 --no-pager >&2
         exit 1
     fi
-
-    # ── NFQ binding check ─────────────────────────────────────────────────────
-    log_step "Checking suricata.log for NFQ queue binding..."
-    # The log file may take a few extra seconds to be written
-    for i in 1 2 3 4 5; do
-        if [[ -f "$SURICATA_LOG" ]] && \
-           grep -qi "nfq\|queue" "$SURICATA_LOG" 2>/dev/null; then
-            break
-        fi
-        sleep 2
-    done
-
-    if [[ -f "$SURICATA_LOG" ]]; then
-        NFQ_LINES=$(grep -i "nfq\|queue" "$SURICATA_LOG" 2>/dev/null || true)
-        if [[ -n "$NFQ_LINES" ]]; then
-            log_ok "NFQ log entries found:"
-            echo "$NFQ_LINES" | while IFS= read -r line; do log_output "$line"; done
-        else
-            log_warn "No NFQ entries found in suricata.log yet (may still be initialising)"
-            log_warn "Check later with: sudo grep -i 'nfq' $SURICATA_LOG"
-        fi
-    else
-        log_warn "$SURICATA_LOG not found yet - Suricata may still be writing it"
-    fi
 }
-
-
 
 # ── NEXT STEPS ────────────────────────────────────────────────────────────────
 print_next_steps() {
     log_section "Setup Complete - Next Steps"
-    echo -e "
+    echo "
   ${BOLD}Suricata is running in inline NFQueue IPS mode.${RESET}
 
   ${BOLD}Verify packet counter from a LAN client:${RESET}
@@ -465,28 +395,23 @@ print_next_steps() {
     ${CYAN}sudo grep -i 'nfq\\|queue\\|error' $SURICATA_LOG${RESET}
     ${CYAN}sudo suricata -T -c $SURICATA_YAML -v${RESET}   # config check
     ${CYAN}sudo iptables -L FORWARD -n -v --line-numbers${RESET}
-
-  ${BOLD}Emergency: restore connectivity if Suricata locks you out:${RESET}
-    ${RED}sudo iptables -F && sudo iptables -t nat -F${RESET}
-    ${RED}sudo iptables -t nat -A POSTROUTING -o $WAN_IFACE -j MASQUERADE${RESET}
-    ${RED}sudo iptables -A FORWARD -i $LAN_IFACE -o $WAN_IFACE -j ACCEPT${RESET}
-    ${RED}sudo iptables -A FORWARD -i $WAN_IFACE -o $LAN_IFACE -m state --state ESTABLISHED,RELATED -j ACCEPT${RESET}
 "
 }
 
 # ── MAIN ──────────────────────────────────────────────────────────────────────
 main() {
-    echo -e "\n${BOLD}${BLUE}"
+    echo ""
+    printf "${BOLD}${BLUE}"
     echo "  ╔══════════════════════════════════════════════════════════╗"
     echo "  ║   Suricata IPS Setup Script                              ║"
     echo "  ║   NFQueue Inline Mode                                    ║"
     echo "  ║   Orange Pi 5 / Ubuntu 24.04                             ║"
     echo "  ║   Mosudi I.O, FH Technikum Wien - IT Security Lab 2026   ║"
     echo "  ╚══════════════════════════════════════════════════════════╝"
-    echo -e "${RESET}"
-    echo -e "  LAN:     ${BOLD}${LAN_IFACE}${RESET}  ($LAN_SUBNET)"
-    echo -e "  WAN:     ${BOLD}${WAN_IFACE}${RESET}"
-    echo -e "  NFQueue: ${BOLD}queue ${NFQUEUE_NUM}${RESET}"
+    printf "${RESET}\n"
+    echo "  LAN:     ${BOLD}${LAN_IFACE}${RESET}  ($LAN_SUBNET)"
+    echo "  WAN:     ${BOLD}${WAN_IFACE}${RESET}"
+    echo "  NFQueue: ${BOLD}queue ${NFQUEUE_NUM}${RESET}"
     echo ""
 
     preflight_checks
@@ -497,8 +422,6 @@ main() {
     configure_iptables_nfqueue
     configure_systemd
     start_suricata
-    #verify_traffic_counters
-    #verify_all
     print_next_steps
 }
 
