@@ -172,6 +172,10 @@ network:
   wifis:
     ${WAN_IFACE}:
       dhcp4: yes
+      nameservers:
+        addresses:
+          - ${DNS_PRIMARY}
+          - ${DNS_SECONDARY}
       access-points:
         "${WIFI_SSID}":
           password: "${WIFI_PASSWORD}"

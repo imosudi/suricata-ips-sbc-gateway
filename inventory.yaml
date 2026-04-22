@@ -1,0 +1,7 @@
+all:
+  hosts:
+    10.160.240.70:
+      ansible_user: orangepi
+      ansible_become: yes
+      ansible_connection: ssh
+      ansible_python_interpreter: /usr/bin/python3
