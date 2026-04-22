@@ -1,5 +1,4 @@
-
-#!/usr/bin/env bash
+#!/bin/sh
 # =============================================================================
 # Suricata IPS Setup Script
 # Orange Pi 5 / Ubuntu 24.04 LTS - NFQueue Inline Mode
