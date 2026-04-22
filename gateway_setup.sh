@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # =============================================================================
 # Gateway System Setup Script
 # SBC: Single Board Computer - 
