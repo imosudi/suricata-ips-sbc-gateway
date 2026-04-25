@@ -12,6 +12,15 @@
 #   ansible-playbook -K -i inventory.yaml suricata_setup_playbook.yaml
 #   or with custom vars:
 #   ansible-playbook -K -i inventory.yaml suricata_setup_playbook.yaml -e "lan_subnet=10.10.10.0/24"
+# What this playbook does:
+#   1. Installs Suricata and dependencies
+#   2. Configures Suricata for NFQueue inline mode
+#   3. Sets up iptables rules to direct traffic to NFQueue
+#   4. Creates a systemd override to run Suricata in NFQueue mode
+#   5. Validates configuration and starts the Suricata service
+#   6. Provides post-setup instructions for testing and rule management
+#
+
 
 - name: Suricata IPS Setup (NFQueue Inline Mode)
   hosts: all

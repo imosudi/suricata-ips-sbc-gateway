@@ -6,6 +6,7 @@ all:
       #ansible_user:  "{{ lookup('ansible.builtin.env', 'ANSIBLE_USER', default='orangepi') }}"
       ansible_user:  "{{ lookup('ansible.builtin.env', 'ANSIBLE_USER') }}"
       ansible_become: yes
+      ansible_become_method: sudo
       ansible_connection: ssh
       ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_SSH_KEY') }}"
       ansible_python_interpreter: /usr/bin/python3
@@ -50,7 +51,7 @@ all:
     dns_primary: "9.9.9.9"
     dns_secondary: "1.1.1.1"
     
-    # Security
+    # Trusted MAC address for testing
     trusted_mac: "B4:69:21:75:B0:8E"
 
     # Wi-Fi configuration
@@ -77,12 +78,34 @@ all:
     # Suricata configuration
     nfqueue_num: 0
 
+    # Paths for Suricata configuration and rules management
     suricata_yaml: "/etc/suricata/suricata.yaml"
     suricata_yaml_backup: "/etc/suricata/suricata.yaml.ansible-bak"
     suricata_log_dir: "/var/log/suricata"
     suricata_rules_dir: "/etc/suricata/rules"
+    suricata_rules_base:    "/etc/suricata/rules"
     local_rules: "/etc/suricata/rules/local.rules"
+    suricata_local_rules:   "/etc/suricata/rules/local.rules"
     default_rules: "/etc/suricata/rules/suricata.rules"
-
     systemd_override_dir: "/etc/systemd/system/suricata.service.d"
     systemd_override: "/etc/systemd/system/suricata.service.d/override.conf"
+    suricata_rules_avail:   "/etc/suricata/rules/available"
+    suricata_rules_enabled: "/etc/suricata/rules/enabled"
+    suricata_pid:           "/run/suricata.pid"
+
+    
+    # Rule module toggle map 
+    # Set any module to true/false to include/exclude in rule enforcement
+    suricata_rule_modules:
+      "10_trusted.rules":  true
+      "20_icmp.rules":     true
+      "30_http.rules":     true
+      "40_tls.rules":      true
+      "50_telnet.rules":   true
+      "60_scan.rules":     true
+      "70_dns.rules":      true
+      "80_ssh.rules":      true
+      "90_ftp.rules":      true
+      "100_smtp.rules":    true
+      "110_policy.rules":  true
+      "120_local.rules":   true

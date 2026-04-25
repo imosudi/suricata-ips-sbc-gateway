@@ -1,0 +1,233 @@
+
+---
+# rules_setup_playbook.yaml
+# Ansible playbook for Suricata IPS Setup
+# Orange Pi 5 / Ubuntu 24.04 LTS - NFQueue Inline Mode
+# Mosudi I.O, FH Technikum Wien - IT Security Lab 2026
+#
+# Prerequisites:
+#   - suricata_setup_playbook.yaml must have been run successfully first
+#   
+
+# Ansible playbook to set up Suricata as an IPS using NFQueue inline mode
+# Run with: ansible-playbook -K -i inventory.yaml rules_setup_playbook.yaml
+
+- name: Deploy Suricata Modular Rule Engine
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+
+  tasks:
+    - name: Ensure Suricata rules directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - "{{ suricata_rules_dir }}"
+        - "{{ suricata_rules_avail }}"
+        - "{{ suricata_rules_enabled }}"
+    
+    - name: Ensure local.rules file exists
+      file:
+        path: "{{ local_rules }}"
+        state: touch
+        mode: '0644'
+
+    - name: Deploy trusted device rule
+      when: suricata_rule_modules["10_trusted.rules"]
+      copy:
+        dest: "{{ suricata_rules_avail }}/10_trusted.rules"
+        mode: '0644'
+        content: |
+          # Trusted Admin Device (Anti-lockout)
+          {% if trusted_mac != "" %}
+          pass ethernet any any -> any any (msg:"TRUSTED ADMIN BYPASS"; ether src {{ trusted_mac }}; sid:9000000; rev:1;)
+          {% else %}
+          # trusted_mac not defined
+          {% endif %}
+
+    # RULE MODULES
+    - name: Deploy ICMP rules
+      when: suricata_rule_modules["20_icmp.rules"]
+      copy:
+        dest: "{{ suricata_rules_avail }}/20_icmp.rules"
+        content: |
+          alert icmp any any -> $HOME_NET any (msg:"ICMP Timestamp Request"; itype:13; sid:9000201; rev:1;)
+          alert icmp any any -> $HOME_NET any (msg:"ICMP Timestamp Reply"; itype:14; sid:9000202; rev:1;)
+          alert icmp any any -> $HOME_NET any (msg:"ICMP Flood"; itype:8; threshold:type both, track by_src, count 50, seconds 5; sid:9000203; rev:1;)
+
+    - name: Deploy HTTP rules
+      when: suricata_rule_modules["30_http.rules"]
+      copy:
+        dest: "{{ suricata_rules_avail }}/30_http.rules"
+        content: |
+          alert http any any -> $HOME_NET any (msg:"HTTP SQLi"; http.uri; content:"' OR '1'='1"; nocase; sid:9000301; rev:1;)
+          alert http any any -> $HOME_NET any (msg:"HTTP Traversal"; http.uri; content:"../"; sid:9000302; rev:1;)
+          alert http any any -> $HOME_NET any (msg:"HTTP sqlmap"; http.user_agent; content:"sqlmap"; nocase; sid:9000303; rev:1;)
+
+    - name: Deploy TLS rules
+      when: suricata_rule_modules["40_tls.rules"]
+      copy:
+        dest: "{{ suricata_rules_avail }}/40_tls.rules"
+        content: |
+          alert tls any any -> any any (msg:"TLS example.com"; tls.sni; content:"example.com"; sid:9000401; rev:1;)
+          alert tls any any -> $HOME_NET any (msg:"TLS Deprecated"; tls.version; content:"TLS 1.0"; sid:9000402; rev:1;)
+
+    - name: Deploy Telnet rules
+      when: suricata_rule_modules["50_telnet.rules"]
+      copy:
+        dest: "{{ suricata_rules_avail }}/50_telnet.rules"
+        content: |
+          alert tcp any any -> $HOME_NET 23 (msg:"Telnet Login Attempt"; flow:to_server,established; content:"login"; nocase; sid:9000501; rev:1;)
+          alert tcp any any -> $HOME_NET 23 (msg:"Telnet Password Attempt"; flow:to_server,established; content:"password"; nocase; sid:9000502; rev:1;)
+
+    - name: Deploy scan detection rules
+      when: suricata_rule_modules["60_scan.rules"]
+      copy:
+        dest: "{{ suricata_rules_avail }}/60_scan.rules"
+        content: |
+          alert tcp any any -> $HOME_NET any (msg:"SYN Scan"; flags:S; threshold:type threshold, track by_src, count 10, seconds 2; sid:9000601; rev:1;)
+          alert tcp any any -> $HOME_NET any (msg:"NULL Scan"; flags:0; sid:9000602; rev:1;)
+          alert tcp any any -> $HOME_NET any (msg:"SCAN FIN"; flags:F; sid:9000603; rev:1;)
+          alert tcp any any -> $HOME_NET any (msg:"SCAN XMAS"; flags:FPU; sid:9000604; rev:1;)
+          alert udp any any -> $HOME_NET any (msg:"SCAN UDP"; threshold:type both, track by_src, count 20, seconds 3; sid:9000605; rev:1;)
+          alert tcp any any -> $HOME_NET any (msg:"SCAN ACK"; flags:A; threshold:type both, track by_src, count 10, seconds 2; sid:9000606; rev:1;)
+
+    - name: Deploy DNS rules
+      when: suricata_rule_modules["70_dns.rules"]
+      copy:
+        dest: "{{ suricata_rules_avail }}/70_dns.rules"
+        mode: '0644'
+        content: |
+          alert dns any any -> any any (msg:"DNS Long Query"; flow:to_server; dns.query; pcre:"/.{50,}/"; sid:9000701; rev:2;)
+          alert dns any any -> any any (msg:"DNS Suspicious Encoded Query"; flow:to_server; dns.query; pcre:"/^[A-Za-z0-9+\/=]{30,}$/"; sid:9000702; rev:1;)
+          alert dns any any -> any any (msg:"DNS Query for localhost"; flow:to_server; dns.query; content:"localhost"; nocase; sid:9000703; rev:1;)
+          alert udp $HOME_NET any -> any 53 (msg:"DNS High Query Rate"; flow:to_server; threshold:type both, track by_src, count 100, seconds 5; sid:9000704; rev:1;)
+          alert udp any any -> $HOME_NET !53 (msg:"DNS Response on Non-Standard Port"; flow:to_client; sid:9000705; rev:1;)
+
+    - name: Deploy SSH rules
+      when: suricata_rule_modules["80_ssh.rules"]
+      copy:
+        dest: "{{ suricata_rules_avail }}/80_ssh.rules"
+        mode: '0644'
+        content: |
+          alert tcp any any -> $HOME_NET 22 (msg:"SSH Connection Burst"; flow:to_server; flags:S; threshold:type both, track by_src, count 10, seconds 30; sid:9000801; rev:1;)
+          alert tcp any any -> $HOME_NET 22 (msg:"SSH Banner Detected"; flow:to_server,established; content:"SSH-"; depth:4; sid:9000802; rev:1;)
+          alert tcp any any -> $HOME_NET !22 (msg:"SSH on Non-Standard Port"; flow:to_server,established; content:"SSH-"; depth:4; sid:9000803; rev:1;)
+
+    - name: Deploy FTP rules
+      when: suricata_rule_modules["90_ftp.rules"]
+      copy:
+        dest: "{{ suricata_rules_avail }}/90_ftp.rules"
+        mode: '0644'
+        content: |
+          alert tcp any any -> $HOME_NET 21 (msg:"FTP Anonymous Login Attempt"; flow:to_server,established; content:"USER anonymous"; nocase; sid:9000901; rev:1;)
+          alert tcp any any -> $HOME_NET 21 (msg:"FTP USER Command"; flow:to_server,established; content:"USER "; sid:9000902; rev:1;)
+          alert tcp any any -> $HOME_NET 21 (msg:"FTP PASS Command"; flow:to_server,established; content:"PASS "; sid:9000903; rev:1;)
+          alert tcp any any -> $HOME_NET 21 (msg:"FTP PORT Command (Bounce Attempt)"; flow:to_server,established; content:"PORT "; sid:9000904; rev:1;)
+
+    - name: Deploy SMTP rules
+      when: suricata_rule_modules["100_smtp.rules"]
+      copy:
+        dest: "{{ suricata_rules_avail }}/100_smtp.rules"
+        mode: '0644'
+        content: |
+          alert tcp any any -> $HOME_NET 25 (msg:"SMTP RCPT Probe"; flow:to_server,established; content:"RCPT TO:"; nocase; sid:9001001; rev:1;)
+          alert tcp any any -> $HOME_NET 25 (msg:"SMTP AUTH Flood"; flow:to_server,established; content:"AUTH LOGIN"; threshold:type both, track by_src, count 5, seconds 30; sid:9001002; rev:1;)
+          alert tcp any any -> $HOME_NET 25 (msg:"SMTP EHLO IP Literal"; flow:to_server,established; content:"EHLO ["; sid:9001003; rev:1;)
+          
+    - name: Deploy POLICY rules
+      when: suricata_rule_modules["110_policy.rules"]
+      copy:
+        dest: "{{ suricata_rules_avail }}/110_policy.rules"
+        mode: '0644'
+        content: |
+          alert tcp any any -> $HOME_NET 23 (msg:"POLICY Telnet Usage"; flow:to_server,established; sid:9001101; rev:2;)
+          alert tcp $HOME_NET any -> any 6667 (msg:"POLICY Outbound IRC"; flow:to_server; sid:9001102; rev:2;)
+          alert http any any -> $HOME_NET any (msg:"POLICY HTTP Basic Auth Used"; flow:to_server,established; http.header; pcre:"/Authorization:\s*Basic\s+[A-Za-z0-9+\/=]{20,}/i"; sid:9001103; rev:1;)
+          alert http any any -> $HOME_NET any (msg:"POLICY HTTP Bearer Token Used"; flow:to_server,established; http.header; pcre:"/Authorization:\s*Bearer\s+[A-Za-z0-9\-._~+/=]{20,}/i"; sid:9001104; rev:1;)
+          alert http any any -> $HOME_NET any (msg:"POLICY HTTP Digest Auth Used"; flow:to_server,established; http.header; pcre:"/Authorization:\s*Digest\s+[A-Za-z0-9+\/=]{20,}/i"; sid:9001105; rev:1;)
+          alert http any any -> $HOME_NET any (msg:"POLICY HTTP NTLM Auth Used"; flow:to_server,established; http.header; pcre:"/Authorization:\s*NTLM\s+[A-Za-z0-9+\/=]{20,}/i"; sid:9001106; rev:1;)
+          alert http any any -> $HOME_NET any (msg:"POLICY HTTP Login Page"; flow:to_server,established; http.uri; content:"/login"; nocase; sid:9001107; rev:1;)
+          alert http any any -> $HOME_NET any (msg:"POLICY HTTP Admin Path"; flow:to_server,established; http.uri; content:"/admin"; nocase; sid:9001108; rev:1;)
+          alert icmp any any -> $HOME_NET any (msg:"POLICY Large ICMP Payload"; dsize:>512; sid:9001109; rev:1;)
+          alert tcp $HOME_NET any -> any 9001 (msg:"POLICY Possible Tor Relay"; flow:to_server; sid:9001110; rev:1;)
+          alert tcp $HOME_NET any -> any 9050 (msg:"POLICY Tor SOCKS Proxy"; flow:to_server; sid:9001111; rev:1;)
+
+          alert tcp any any -> $HOME_NET 3306 (msg:"POLICY MySQL Access"; flow:to_server,established; sid:9001114; rev:1;)
+          alert tcp any any -> $HOME_NET 1433 (msg:"POLICY MSSQL Access"; flow:to_server,established; sid:9001115; rev:1;)  
+          alert tcp any any -> $HOME_NET 6379 (msg:"POLICY Redis Access"; flow:to_server,established; sid:9001116; rev:1;)  
+
+          alert tcp any any -> $HOME_NET 5900 (msg:"POLICY VNC Access"; flow:to_server,established; sid:9001113; rev:1;)
+          alert tcp any any -> $HOME_NET 3389 (msg:"POLICY RDP Access"; flow:to_server,established; sid:9001112; rev:1;)
+          alert tcp any any -> $HOME_NET 3306 (msg:"POLICY MySQL Access"; flow:to_server,established; sid:9001114; rev:1;)  
+          alert tcp any any -> $HOME_NET 1433 (msg:"POLICY MSSQL Access"; flow:to_server,established; sid:9001115; rev:1;)  
+          alert tcp any any -> $HOME_NET 6379 (msg:"POLICY Redis Access"; flow:to_server,established; sid:9001116; rev:1;)  
+    
+    # Remove old enabled rules (cleanup)
+    - name: Remove old enabled rules
+      file:
+        path: "{{ suricata_rules_enabled }}"
+        state: absent
+
+    # Recreate directory immediately after cleanup
+    - name: Recreate enabled directory
+      file:
+        path: "{{ suricata_rules_enabled }}"
+        state: directory
+        mode: '0755'
+ 
+
+    - name: Enable selected rules safely
+      file:
+        src: "{{ suricata_rules_avail }}/{{ item }}"
+        dest: "{{ suricata_rules_enabled }}/{{ item }}"
+        state: link
+      loop: "{{ suricata_rule_modules.keys() | list }}"
+      when:
+        - suricata_rule_modules[item]
+        - (suricata_rules_avail + '/' + item) is exists
+
+    # Build local.rules
+    - name: Build unified local.rules
+      shell: |
+        echo "# Auto-generated — DO NOT EDIT" > {{ local_rules }}
+        #for f in $(ls {{ suricata_rules_enabled }}/*.rules | sort); do
+        for f in {{ suricata_rules_enabled }}/*.rules; do
+          cat "$f" >> {{ local_rules }}
+          echo "" >> {{ local_rules }}
+        done
+      args:
+        executable: /bin/bash
+
+    - name: Set permissions
+      file:
+        path: "{{ local_rules }}"
+        mode: '0644'
+
+    # Validate Suricata configuration
+    - name: Validate Suricata configuration
+      command: suricata -T -c {{ suricata_yaml }} -v
+      register: suricata_test
+      failed_when: "'failed' in suricata_test.stderr"
+      #tags: rules_setup
+      tags: [suricata, rules, validate]
+
+    - name: Restart Suricata to apply new rules
+      service:
+        name: suricata
+        state: restarted
+      #tags: rules_setup
+      tags: [suricata, rules, restart]  
+    
+    # Safe reload
+    - name: Reload Suricata rules (zero downtime)
+      shell: kill -USR2 $(cat /run/suricata.pid)
+      #tags: rules_setup
+      tags: [suricata, rules, reload]
+
+
