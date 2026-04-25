@@ -1,4 +1,5 @@
-!#/usr/bin/env bash
+#!/usr/bin/env bash
+
 # =============================================================================
 # Suricata IPS SBC Gateway Setup Script
 # FH Technikum Wien — IT Security Lab 2026
