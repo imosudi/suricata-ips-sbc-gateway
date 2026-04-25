@@ -24,54 +24,7 @@
   become: yes
   gather_facts: yes
   
-  # Variables with defaults - can be overridden via -e or vars file
-  vars:
-    # Network interfaces
-    lan_iface: "eth0"
-    wan_iface: "wlan0"
-    
-    # LAN configuration
-    lan_ip: "10.10.10.1"
-    lan_cidr: "10.10.10.1/24"
-    lan_subnet: "10.10.10.0/24"
-    lan_netmask: "255.255.255.0"
-    lan_network: "10.10.10.0"
-    
-    # DHCP configuration
-    dhcp_range_start: "10.10.10.100"
-    dhcp_range_end: "10.10.10.200"
-    dhcp_lease_default: 600
-    dhcp_lease_max: 7200
-    
-    # DNS servers
-    dns_primary: "9.9.9.9"
-    dns_secondary: "1.1.1.1"
-    
-    # Wi-Fi configuration
-    wifi_ssid: "{{ env_vars.WIFI_SSID | default(lookup('env','WIFI_SSID')) }}"
-    #wifi_ssid: "{{ lookup('ansible.builtin.env', 'WIFI_SSID') }}" #, default='Mio4') }}"
-    wifi_password: "{{ env_vars.WIFI_PASSWORD | default(lookup('env','WIFI_PASSWORD')) }}" #, default='ceffxpnfax') }}"
-    #wifi_password: "{{ lookup('ansible.builtin.env', 'WIFI_PASSWORD') }}" #, default='ceffxpnfax') }}"
-    #wifi_ssid: "{{ lookup
-    wifi_password: "{{ lookup('ansible.builtin.env', 'WIFI_PASSWORD') }}" #, default='ceffxpnfax') }}"
-    #wifi_ssid: "{{ lookup('ansible.builtin.env', 'WIFI_SSID', default='Mio4') }}"
-    #wifi_password: "{{ lookup('ansible.builtin.env', 'WIFI_PASSWORD', default='ceffxpnfax') }}"
-    
-    # Configuration file paths
-    netplan_file: "/etc/netplan/001-gateway.yaml"
-    sysctl_file: "/etc/sysctl.d/99-gateway.conf"
-    dhcp_defaults: "/etc/default/isc-dhcp-server"
-    dhcp_conf: "/etc/dhcp/dhcpd.conf"
-    
-    # Required packages
-    required_packages:
-      - vim
-      - iproute2
-      - net-tools
-      - iptables
-      - iptables-persistent
-      - netfilter-persistent
-      - isc-dhcp-server
+  
 
   pre_tasks:
     - name: Pre-flight checks - Verify running as root

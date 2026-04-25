@@ -18,22 +18,7 @@
   become: yes
   gather_facts: yes
 
-  vars:
-    wan_iface: "wlan0"
-    lan_iface: "eth0"
-    lan_subnet: "10.10.10.0/24"
-    nfqueue_num: 0
-
-    suricata_yaml: "/etc/suricata/suricata.yaml"
-    suricata_yaml_backup: "/etc/suricata/suricata.yaml.ansible-bak"
-    suricata_log_dir: "/var/log/suricata"
-    suricata_rules_dir: "/etc/suricata/rules"
-    local_rules: "/etc/suricata/rules/local.rules"
-    default_rules: "/etc/suricata/rules/suricata.rules"
-
-    systemd_override_dir: "/etc/systemd/system/suricata.service.d"
-    systemd_override: "/etc/systemd/system/suricata.service.d/override.conf"
-
+  
   pre_tasks:
     - name: Ensure running as root
       assert:
