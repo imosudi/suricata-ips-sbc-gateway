@@ -1,3 +1,4 @@
+
 # inventory.yaml - Ansible inventory file for managing the target host
 all:
   hosts:
@@ -51,8 +52,9 @@ all:
     dns_primary: "9.9.9.9"
     dns_secondary: "1.1.1.1"
     
-    # Trusted MAC address for testing
+    # Trusted MAC/IP address for testing  and troubleshooting
     trusted_mac: "B4:69:21:75:B0:8E"
+    trusted_ip: "10.68.12.241"
 
     # Wi-Fi configuration
     wifi_ssid: "{{ env_vars.WIFI_SSID | default(lookup('env','WIFI_SSID')) }}"
@@ -97,15 +99,40 @@ all:
     # Rule module toggle map 
     # Set any module to true/false to include/exclude in rule enforcement
     suricata_rule_modules:
-      "10_trusted.rules":  true
-      "20_icmp.rules":     true
-      "30_http.rules":     true
-      "40_tls.rules":      true
-      "50_telnet.rules":   true
-      "60_scan.rules":     true
-      "70_dns.rules":      true
-      "80_ssh.rules":      true
-      "90_ftp.rules":      true
-      "100_smtp.rules":    true
-      "110_policy.rules":  true
-      "120_local.rules":   true
+      "10_trusted.rules":
+        enabled: true
+        mode: "bypass"        
+      "20_icmp.rules":
+        enabled: true
+        mode: "ids"           
+      "30_http.rules":
+        enabled: true
+        mode: "ids"
+      "40_tls.rules":
+        enabled: true
+        mode: "ids"
+      "50_telnet.rules":
+        enabled: true
+        mode: "ips"
+      "60_scan.rules":
+        enabled: true
+        mode: "ips"
+      "70_dns.rules":
+        enabled: true
+        mode: "ids"
+      "80_ssh.rules":        
+        enabled: true
+        mode: "ips"
+      "90_ftp.rules":         
+        enabled: true
+        mode: "ips"
+      "100_smtp.rules":
+        enabled: true
+        mode: "ids"
+      "110_policy.rules":
+        enabled: true
+        mode: "ips"
+      "120_local.rules":
+        enabled: true
+        mode: "ids"
+

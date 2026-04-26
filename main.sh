@@ -22,6 +22,8 @@ if [[ -f .env ]]; then
     export $(grep -v '^#' .env | xargs)
 fi
 
+export $(grep -v '^#' .env | xargs)
+
 # Validate trusted_mac
 [[ -z "${trusted_mac:-}" ]] && err "trusted_mac not set in environment"
 
