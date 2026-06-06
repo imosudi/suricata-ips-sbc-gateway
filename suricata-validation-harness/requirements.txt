@@ -1,0 +1,24 @@
+# Suricata Validation Harness — Python dependencies
+# Install with: pip install -r requirements.txt
+
+# Core data handling
+pyyaml>=6.0.1
+jinja2>=3.1.4
+pandas>=2.2.0
+
+# Network analysis
+scapy>=2.5.0
+dpkt>=1.9.8
+
+# Reporting
+matplotlib>=3.9.0
+weasyprint>=62.0        # HTML→PDF conversion (optional)
+tabulate>=0.9.0
+
+# Suricata log parsing
+ujson>=5.9.0            # fast JSON for EVE logs
+
+# Utilities
+python-dateutil>=2.9.0
+click>=8.1.7
+rich>=13.7.0            # pretty terminal output from Python analyzers

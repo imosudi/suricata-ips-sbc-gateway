@@ -27,10 +27,10 @@ export $(grep -v '^#' .env | xargs)
 # Validate trusted_mac
 [[ -z "${trusted_mac:-}" ]] && err "trusted_mac not set in environment"
 
-ansible-playbook -K -i inventory.yaml gateway_setup_playbook.yaml
+ansible-playbook -K -i inventory.yaml ansible_deployment/gateway_setup_playbook.yaml
 
-ansible-playbook -K -i inventory.yaml suricata_setup_playbook.yaml
+ansible-playbook -K -i inventory.yaml ansible_deployment/suricata_setup_playbook.yaml
 
-ansible-playbook -K -i inventory.yaml rules_setup_playbook.yaml 
+ansible-playbook -K -i inventory.yaml ansible_deployment/rules_setup_playbook.yaml 
 
 
