@@ -149,7 +149,6 @@ harness workflow, configuration files, attack modules, and scoring model.
   <img src="images/icon.png" alt="Suricata IPS SBC Gateway icon" width="96" height="96">
 </p>
 
-The project also includes `images/icon.svg` for vector-based use cases.
 
 ## License
 
