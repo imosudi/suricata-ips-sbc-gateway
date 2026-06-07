@@ -256,7 +256,102 @@ production networks, additional controls would be required, including robust
 secrets management, hardening, backup policy, monitoring, and fail-open/fail-
 closed decisions.
 
-## 7. Validation Harness
+## 7. Importance for IoT Deployments
+
+IoT deployments often contain devices with limited CPU capacity, memory,
+storage, battery budget, and operating system flexibility. These constraints
+create a form of resource poverty: even when strong security mechanisms are
+well understood, many IoT devices cannot easily support them without affecting
+their main function, increasing cost, or exceeding their hardware limits.
+
+Typical challenges include:
+
+- Limited processing power for encryption, deep logging, endpoint protection,
+  or complex authentication workflows.
+- Minimal storage for certificates, logs, package updates, and security agents.
+- Vendor firmware that cannot be modified or audited easily.
+- Long device lifetimes with short vendor support windows.
+- Weak default credentials or inconsistent credential rotation support.
+- Missing support for modern TLS versions, certificate validation, or mutual
+  authentication.
+- Difficulty deploying and renewing SSL/TLS certificates on each device,
+  including self-generated certificates.
+- Inconsistent update mechanisms across different vendors and device classes.
+
+Because of these limitations, defending every IoT device individually is often
+unrealistic. A device-by-device strategy requires each endpoint to implement
+secure configuration, certificate lifecycle management, logging, patching,
+firewalling, and intrusion detection. In a mixed IoT network, this becomes
+operationally expensive and technically uneven.
+
+The Suricata IPS SBC Gateway supports a perimeter defense strategy for such
+environments. Instead of relying only on each IoT device to protect itself, the
+gateway becomes a shared enforcement and observation point for the network
+segment. All devices behind the gateway benefit from common controls:
+
+- Centralized traffic inspection before packets leave or enter the protected
+  LAN.
+- Protocol and policy enforcement for devices that cannot run local security
+  agents.
+- Detection of scanning, brute-force attempts, suspicious DNS behavior, unsafe
+  plaintext protocols, and unwanted outbound services.
+- A single place to collect alerts, packet captures, counters, and performance
+  evidence.
+- Controlled access paths into the IoT segment instead of exposing each device
+  directly to upstream networks.
+- Easier experimentation with IDS and IPS policies before applying them to
+  production-like device groups.
+
+This model does not remove the need for secure device configuration, but it
+reduces dependence on perfect endpoint security. Even devices with weak or
+limited built-in controls can be placed behind a stronger network boundary.
+
+### 7.1 Certificate and Access Challenges
+
+SSL/TLS certificate management is a common pain point in IoT systems. Some
+devices do not support modern certificate chains, some only support self-signed
+certificates, and others expose web interfaces that are difficult to automate.
+Even when self-generated certificates are possible, operators still need to
+handle certificate generation, distribution, trust, renewal, and revocation for
+each device.
+
+A gateway-based design can reduce this burden by limiting which systems can
+reach device management interfaces. For example, the gateway can enforce policy
+so that administrative access is allowed only from trusted IP addresses, VPN
+subnets, jump hosts, or management workstations. Suricata rules and firewall
+rules can then monitor and restrict traffic to sensitive IoT services such as
+HTTP, HTTPS, SSH, Telnet, FTP, MQTT, CoAP, or vendor-specific ports.
+
+This is especially useful for devices that only support self-signed
+certificates. The gateway cannot magically make an insecure device interface
+secure, but it can reduce exposure by ensuring that only authorized management
+paths can reach that interface. It can also alert on suspicious access attempts,
+unexpected protocols, brute-force behavior, or data exfiltration patterns.
+
+### 7.2 Secure Connectivity for Devices Behind the Gateway
+
+Devices behind the same IDS/IPS gateway gain the opportunity to communicate
+through a controlled trust boundary. The gateway can separate normal device
+traffic from administrative traffic, enforce outbound policy, and detect
+unexpected lateral or internet-bound behavior.
+
+Examples include:
+
+- Allowing IoT devices to reach only required cloud endpoints or update servers.
+- Blocking or alerting on direct access to risky services such as Telnet or FTP.
+- Monitoring DNS queries for suspicious domains or dynamic DNS abuse.
+- Restricting management access to selected administrators.
+- Detecting scans between devices on the protected side of the network.
+- Creating a shared logging point for devices that cannot produce useful local
+  security logs.
+
+This perimeter approach is valuable in smart homes, teaching labs, industrial
+prototypes, environmental monitoring systems, and small research deployments.
+It offers a practical middle ground: individual devices should still be
+configured as securely as possible, but the network gateway provides an
+additional defensive layer that is easier to manage, observe, and update.
+
+## 8. Validation Harness
 
 The validation harness in `ids_ips_evaluation/` is designed to run from Kali
 Linux as an attacker and evidence collection host.
@@ -269,7 +364,7 @@ Its main functions are:
 - Score detection, blocking, latency, throughput, and false positives.
 - Generate JSON, CSV, and HTML reports.
 
-### 7.1 Attack Modules
+### 8.1 Attack Modules
 
 | Module | Tools | Coverage |
 |--------|-------|----------|
@@ -284,7 +379,7 @@ Its main functions are:
 | `policy` | `nc`, `curl` | Tor ports, BitTorrent DHT, IRC, HTTP CONNECT. |
 | `benign` | `curl`, `ping`, `dig` | False-positive baseline traffic. |
 
-### 7.2 Evidence Collection
+### 8.2 Evidence Collection
 
 | Collector | Evidence |
 |-----------|----------|
@@ -294,7 +389,7 @@ Its main functions are:
 | `performance_collector.sh` | CPU and memory samples from Kali and gateway. |
 | `environment_collector.sh` | Tool versions, Suricata version, and rule state. |
 
-### 7.3 Scoring Model
+### 8.3 Scoring Model
 
 The harness computes:
 
@@ -315,9 +410,82 @@ Grades are assigned as:
 | D | 60 to 69 |
 | F | Below 60 |
 
-## 8. Operational Procedures
+## 9. Migration from `ids_ips_evaluation.sh` to `ids_ips_evaluation/`
 
-### 8.1 Deploy the Gateway
+The project originally included `ids_ips_evaluation.sh` as a single-file Kali
+evaluation client. That script was valuable as a first working prototype
+because it placed the complete test flow in one readable shell program:
+
+- Prompt for the target host, network interface, web URL, gateway IP, and SSH
+  user.
+- Check and install required tools such as `nmap`, `hping3`, `hydra`,
+  `sqlmap`, `tcpdump`, `tcpreplay`, `iperf3`, `jq`, and `ssh`.
+- Start a local packet capture.
+- Run reconnaissance, flood, malformed packet, brute-force, SQL injection,
+  throughput, and replay tests.
+- Retrieve Suricata alerts and drop events from the gateway through SSH.
+- Produce a timestamped local report directory with logs, PCAP data, alert
+  summaries, throughput output, and a final text report.
+
+This monolithic approach was useful during early development because it reduced
+the number of moving parts. The full evaluation concept could be tested quickly
+from one entry point, and every command was visible in sequence. However, as the
+evaluation scope grew, the single-script model became harder to maintain.
+Traffic generation, evidence collection, scoring, configuration, and reporting
+all lived in the same file, which made targeted changes riskier and made it
+harder to reuse individual parts of the workflow.
+
+The newer `ids_ips_evaluation/` directory keeps the same core idea but turns it
+into a modular validation harness:
+
+```text
+ids_ips_evaluation/
+├── validation_harness.sh   Main orchestrator
+├── config/                 Lab, target, scoring, profile, and SID mapping data
+├── attacks/                One attack module per protocol or behavior
+├── collectors/             Evidence collection from Kali and gateway
+├── analyzers/              Python scoring and attribution logic
+├── reports/                HTML, CSV, and aggregate report generation
+├── logs/                   Collected EVE JSON and session logs
+├── pcaps/                  Local and gateway packet captures
+├── results/                Scoring output and final reports
+└── archive/                Compressed historical sessions
+```
+
+The migration improves the project in several ways:
+
+| Area | Original `ids_ips_evaluation.sh` | Modular `ids_ips_evaluation/` |
+|------|----------------------------------|-------------------------------|
+| Configuration | Interactive prompts and inline variables. | Reusable files such as `config/lab.conf`, `config/targets.conf`, and `config/scoring.conf`. |
+| Attacks | Fixed command sequence in one script. | Separate protocol modules under `attacks/`. |
+| Collection | Inline SSH, jq, tcpdump, and report extraction. | Dedicated collectors for EVE, stats, PCAP, performance, and environment data. |
+| Analysis | Basic alert summaries and throughput extraction. | Python analyzers for detection, IPS blocking, latency, throughput, false positives, grading, and SID mapping. |
+| Reporting | Plain text final report. | JSON results plus CSV and HTML report generation. |
+| Maintainability | Any change risks affecting the entire workflow. | Modules can be tested and adjusted independently. |
+| Extensibility | Adding a test expands the already-large shell file. | New attacks, collectors, or analyzers can be added as new files. |
+
+The migration should be understood as an architectural refactor rather than a
+complete replacement of the original idea. The original script defines the
+prototype workflow and remains useful as a compact reference for the evaluation
+sequence. The directory-based harness formalizes that workflow into smaller
+components with clearer responsibilities.
+
+The recommended long-term role of `ids_ips_evaluation.sh` is one of the
+following:
+
+- Keep it as a legacy prototype and document that new work should target
+  `ids_ips_evaluation/`.
+- Convert it into a thin compatibility wrapper that calls
+  `ids_ips_evaluation/validation_harness.sh`.
+- Remove it after all functionality has been mapped into the modular harness
+  and users have migrated to the new interface.
+
+For this project, the modular harness is the preferred path because it better
+supports repeatable testing, scoring, reporting, and future expansion.
+
+## 10. Operational Procedures
+
+### 10.1 Deploy the Gateway
 
 ```bash
 vi inventory.yaml
@@ -326,7 +494,7 @@ chmod +x main.sh
 sudo ./main.sh
 ```
 
-### 8.2 Validate Suricata on the Gateway
+### 10.2 Validate Suricata on the Gateway
 
 ```bash
 sudo suricata -T -c /etc/suricata/suricata.yaml
@@ -335,7 +503,7 @@ sudo iptables -L FORWARD -n -v --line-numbers
 sudo tail -f /var/log/suricata/fast.log
 ```
 
-### 8.3 Run the Validation Harness
+### 10.3 Run the Validation Harness
 
 ```bash
 cd ids_ips_evaluation
@@ -345,7 +513,7 @@ vi config/targets.conf
 sudo ./validation_harness.sh
 ```
 
-### 8.4 Reload Rules
+### 10.4 Reload Rules
 
 After editing rules on the gateway:
 
@@ -360,7 +528,7 @@ If the reload does not behave as expected, restart the service:
 sudo systemctl restart suricata
 ```
 
-## 9. Assumptions and Constraints
+## 11. Assumptions and Constraints
 
 The current implementation assumes:
 
@@ -383,7 +551,7 @@ Important constraints:
   through NFQUEUE.
 - Encrypted application payloads are not visible without TLS interception.
 
-## 10. Risks and Mitigations
+## 12. Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
@@ -394,7 +562,7 @@ Important constraints:
 | Secrets in local files | Credential exposure. | Keep `.env` and private keys out of version control. |
 | False positives | Legitimate traffic may be blocked in IPS mode. | Run modules in IDS mode first, analyze benign baseline, then promote to IPS. |
 
-## 11. Evaluation Criteria
+## 13. Evaluation Criteria
 
 A successful deployment should satisfy the following:
 
@@ -410,11 +578,17 @@ A successful deployment should satisfy the following:
 - The final harness report shows detection and blocking behavior consistent with
   the configured rule modes.
 
-## 12. Future Work
+## 14. Future Work
 
 Recommended improvements include:
 
 - Add CI checks for shell syntax, Ansible linting, and Markdown links.
+- Convert `ids_ips_evaluation.sh` into a compatibility wrapper or formally
+  retire it after migration is complete.
+- Add example IoT segmentation profiles for device groups such as cameras,
+  sensors, smart plugs, and management workstations.
+- Add optional VPN or jump-host guidance for secure remote administration of
+  devices behind the IDS/IPS gateway.
 - Add an explicit rollback playbook for network and Suricata configuration.
 - Separate secrets handling from `.env` copying by using Ansible Vault or a
   dedicated secret store.
@@ -424,7 +598,7 @@ Recommended improvements include:
 - Add automated rule promotion workflow from IDS to IPS after validation.
 - Add explicit fail-open/fail-closed documentation for NFQUEUE failure modes.
 
-## 13. Conclusion
+## 15. Conclusion
 
 The Suricata IPS SBC Gateway project demonstrates how a low-cost Debian-based
 single board computer can be converted into an inline security gateway. By
