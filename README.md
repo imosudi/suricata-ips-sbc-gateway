@@ -9,6 +9,38 @@
   single board computers, powered by Suricata in NFQUEUE mode.
 </p>
 
+<p align="center">
+  <img alt="Raspberry Pi" src="https://img.shields.io/badge/raspberry--pi-C51A4A?style=flat-square&logo=raspberrypi&logoColor=white">
+  <img alt="Orange Pi 5" src="https://img.shields.io/badge/orange--pi--5-FF7A00?style=flat-square">
+  <img alt="Single Board Computer" src="https://img.shields.io/badge/single--board--computer-455A64?style=flat-square">
+  <img alt="Linux Networking" src="https://img.shields.io/badge/linux--networking-FCC624?style=flat-square&logo=linux&logoColor=black">
+</p>
+
+<p align="center">
+  <img alt="Suricata" src="https://img.shields.io/badge/suricata-IDS%2FIPS-EF3B2D?style=flat-square">
+  <img alt="Intrusion Detection" src="https://img.shields.io/badge/intrusion--detection-1565C0?style=flat-square">
+  <img alt="Intrusion Prevention" src="https://img.shields.io/badge/intrusion--prevention-2E7D32?style=flat-square">
+  <img alt="Inline IPS" src="https://img.shields.io/badge/inline--ips-00897B?style=flat-square">
+  <img alt="Deep Packet Inspection" src="https://img.shields.io/badge/deep--packet--inspection-6A1B9A?style=flat-square">
+  <img alt="Packet Inspection" src="https://img.shields.io/badge/packet--inspection-512DA8?style=flat-square">
+</p>
+
+<p align="center">
+  <img alt="iptables" src="https://img.shields.io/badge/iptables-263238?style=flat-square">
+  <img alt="nftables" src="https://img.shields.io/badge/nftables-37474F?style=flat-square">
+  <img alt="netfilter" src="https://img.shields.io/badge/netfilter-546E7A?style=flat-square">
+  <img alt="NFQUEUE" src="https://img.shields.io/badge/nfqueue-00695C?style=flat-square">
+  <img alt="Traffic Filtering" src="https://img.shields.io/badge/traffic--filtering-0277BD?style=flat-square">
+</p>
+
+<p align="center">
+  <img alt="IoT Security" src="https://img.shields.io/badge/iot--security-5D4037?style=flat-square">
+  <img alt="Network Security" src="https://img.shields.io/badge/network--security-283593?style=flat-square">
+  <img alt="Edge Security" src="https://img.shields.io/badge/edge--security-AD1457?style=flat-square">
+  <img alt="Gateway Security" src="https://img.shields.io/badge/gateway--security-006064?style=flat-square">
+  <img alt="TLS SNI Filtering" src="https://img.shields.io/badge/tls--sni--filtering-4E342E?style=flat-square">
+</p>
+
 ---
 
 ## Overview
