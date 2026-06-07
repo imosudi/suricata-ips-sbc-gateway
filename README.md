@@ -145,11 +145,6 @@ See [ids_ips_evaluation/README.md](./ids_ips_evaluation/README.md) for the full
 harness workflow, configuration files, attack modules, and scoring model.
 
 
-<p align="center">
-  <img src="images/icon.png" alt="Suricata IPS SBC Gateway icon" width="96" height="96">
-</p>
-
-
 ## License
 
 This project is licensed under the **BSD 3-Clause License**. See
