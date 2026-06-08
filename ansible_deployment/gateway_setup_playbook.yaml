@@ -1,10 +1,8 @@
-
-
 # playbook: gateway_setup_playbook.yaml
 ---
 # gateway_setup_playbook.yaml
 # Ansible playbook for Gateway System Setup
-# SBC: Single Board Computer - Raspberry Pi, Orange Pi / Ubuntu 24.04 LTS / Debian 12
+# SBC: Single Board Computer - Orange Pi / Ubuntu 24.04 LTS / Debian 12
 # Mosudi I.O, FH Technikum Wien - IT Security Lab 2026
 #
 # Usage:
@@ -18,6 +16,7 @@
 #   3. IP forwarding (runtime + persistent)
 #   4. iptables NAT + FORWARD rules + persistence
 #   5. ISC DHCP server configuration and startup
+#   6. Custom MOTD deployment
 
 - name: Gateway System Setup for SBC (Raspberry Pi/Orange Pi)
   hosts: all
@@ -361,6 +360,52 @@
           debug:
             msg: "{{ dhcp_service_status.stdout_lines }}"
     
+    - name: Step 6 - Deploy custom FH Technikum Wien MOTD header
+  
+      - name: Check if backup already exists
+        ansible.builtin.stat:
+          path: "{{ motd_backup }}"
+        register: backup_stat
+  
+      - name: Backup existing MOTD header (only if backup does not exist)
+        ansible.builtin.copy:
+          src: "{{ motd_target }}"
+          dest: "{{ motd_backup }}"
+          remote_src: true
+          owner: root
+          group: root
+          mode: "0755"
+        when:
+          - not backup_stat.stat.exists
+        register: backup_result
+  
+      - name: Report backup status
+        ansible.builtin.debug:
+          msg: >-
+            {{
+              'Backup created: ' + motd_backup
+              if backup_result is changed
+              else 'Backup already exists — skipped'
+            }}
+  
+      - name: Deploy new MOTD header from motd.txt
+        ansible.builtin.copy:
+          src: "{{ motd_source }}"
+          dest: "{{ motd_target }}"
+          owner: root
+          group: root
+          mode: "0755"
+        register: motd_deploy_result
+  
+      - name: Report MOTD deployment status
+        ansible.builtin.debug:
+          msg: >-
+            {{
+              'MOTD deployed: ' + motd_target
+              if motd_deploy_result is changed
+              else 'MOTD already deployed — skipped'
+            }}
+  
     - name: Verification Summary
       block:
         - name: Check IP forwarding status

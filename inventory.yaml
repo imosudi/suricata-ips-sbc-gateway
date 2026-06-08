@@ -94,7 +94,9 @@ all:
     suricata_rules_avail:   "/etc/suricata/rules/available"
     suricata_rules_enabled: "/etc/suricata/rules/enabled"
     suricata_pid:           "/run/suricata.pid"
-
+    motd_target: /etc/update-motd.d/10-orangepi-header
+    motd_backup: /etc/update-motd.d/10-orangepi-header_backup
+    motd_source: motd.txt
     
     # Rule module toggle map 
     # Set any module to true/false to include/exclude in rule enforcement
