@@ -52,7 +52,7 @@
 
     - name: Copy .env to remote
       copy:
-        src: .env
+        src: ../.env
         dest: /tmp/.env
 
     - name: Load .env file
@@ -360,85 +360,85 @@
           debug:
             msg: "{{ dhcp_service_status.stdout_lines }}"
     
-    - name: Step 6 - Deploy custom FH Technikum Wien MOTD header
-  
-      - name: Check if backup already exists
-        ansible.builtin.stat:
-          path: "{{ motd_backup }}"
-        register: backup_stat
-  
-      - name: Backup existing MOTD header (only if backup does not exist)
-        ansible.builtin.copy:
-          src: "{{ motd_target }}"
-          dest: "{{ motd_backup }}"
-          remote_src: true
-          owner: root
-          group: root
-          mode: "0755"
-        when:
-          - not backup_stat.stat.exists
-        register: backup_result
-  
-      - name: Report backup status
-        ansible.builtin.debug:
-          msg: >-
-            {{
-              'Backup created: ' + motd_backup
-              if backup_result is changed
-              else 'Backup already exists — skipped'
-            }}
-  
-      - name: Deploy new MOTD header from motd.txt
-        ansible.builtin.copy:
-          src: "{{ motd_source }}"
-          dest: "{{ motd_target }}"
-          owner: root
-          group: root
-          mode: "0755"
-        register: motd_deploy_result
-  
-      - name: Report MOTD deployment status
-        ansible.builtin.debug:
-          msg: >-
-            {{
-              'MOTD deployed: ' + motd_target
-              if motd_deploy_result is changed
-              else 'MOTD already deployed — skipped'
-            }}
-  
+    - name: Step 6 - Deploy custom MOTD header
+      block:
+        - name: Check if backup already exists
+          ansible.builtin.stat:
+            path: "{{ motd_backup }}"
+          register: backup_stat
+    
+        - name: Backup existing MOTD header (only if backup does not exist)
+          ansible.builtin.copy:
+            src: "{{ motd_target }}"
+            dest: "{{ motd_backup }}"
+            remote_src: true
+            owner: root
+            group: root
+            mode: "0755"
+          when:
+            - not backup_stat.stat.exists
+          register: backup_result
+    
+        - name: Report backup status
+          ansible.builtin.debug:
+            msg: >-
+              {{
+                'Backup created: ' + motd_backup
+                if backup_result is changed
+                else 'Backup already exists — skipped'
+              }}
+    
+        - name: Deploy new MOTD header from motd.txt
+          ansible.builtin.copy:
+            src: "{{ motd_source }}"
+            dest: "{{ motd_target }}"
+            owner: root
+            group: root
+            mode: "0755"
+          register: motd_deploy_result
+    
+        - name: Report MOTD deployment status
+          ansible.builtin.debug:
+            msg: >-
+              {{
+                'MOTD deployed: ' + motd_target
+                if motd_deploy_result is changed
+                else 'MOTD already deployed — skipped'
+              }}
+    
     - name: Verification Summary
       block:
         - name: Check IP forwarding status
           ansible.builtin.shell: sysctl -n net.ipv4.ip_forward
           register: verify_fwd
-        
+          
         - name: Check LAN IP assignment
           ansible.builtin.shell: ip -4 addr show {{ lan_iface }} 2>/dev/null | awk '/inet / {print $2}' | head -1
           register: verify_lan_ip
-        
+          
         - name: Check NAT rule presence
           ansible.builtin.shell: iptables -t nat -L POSTROUTING -n | grep -c "MASQUERADE" || true
           register: verify_nat
-        
+          
         - name: Check FORWARD policy
           ansible.builtin.shell: iptables -L FORWARD | head -1 | awk '{print $4}' | tr -d ')'
           register: verify_forward_policy
-        
+          
         - name: Check DHCP service
           ansible.builtin.systemd:
             name: isc-dhcp-server
           register: verify_dhcp
-        
+          
         - name: Check sysctl file existence
           ansible.builtin.stat:
             path: "{{ sysctl_file }}"
           register: verify_sysctl
-        
+          
         - name: Check iptables rules file existence
           ansible.builtin.stat:
             path: /etc/iptables/rules.v4
           register: verify_iptables_save
-        
+          
         - name: Display verification results
           debug:
             msg:
@@ -450,7 +450,7 @@
               - "  isc-dhcp-server running: {{ '✓' if verify_dhcp.status.ActiveState == 'active' else '✗' }} (status: {{ verify_dhcp.status.ActiveState }})"
               - "  Sysctl file exists ({{ sysctl_file }}): {{ '✓' if verify_sysctl.stat.exists else '✗' }}"
               - "  iptables rules file exists: {{ '✓' if verify_iptables_save.stat.exists else '✗' }}"
-  
+    
   post_tasks:
     - name: Print Next Steps
       debug:

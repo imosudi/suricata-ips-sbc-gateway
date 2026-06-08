@@ -2,14 +2,13 @@
 # inventory.yaml - Ansible inventory file for managing the target host
 all:
   hosts:
-    #"{{ lookup('ansible.builtin.env', 'TARGET_IP', default='10.160.240.70') }}":
-    "{{ lookup('ansible.builtin.env', 'TARGET_IP') }}":
-      #ansible_user:  "{{ lookup('ansible.builtin.env', 'ANSIBLE_USER', default='orangepi') }}"
-      ansible_user:  "{{ lookup('ansible.builtin.env', 'ANSIBLE_USER') }}"
+    gateway:
+      ansible_host: "{{ lookup('ansible.builtin.env', 'TARGET_IP') }}"
+      ansible_user: "{{ lookup('ansible.builtin.env', 'ANSIBLE_USER') }}"
       ansible_become: yes
       ansible_become_method: sudo
       ansible_connection: ssh
-      ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_SSH_KEY') }}"
+      ansible_ssh_private_key_file: "{{ lookup('ansible.builtin.env', 'ANSIBLE_SSH_KEY') }}"
       ansible_python_interpreter: /usr/bin/python3
 
 
@@ -57,9 +56,9 @@ all:
     trusted_ip: "10.68.12.241"
 
     # Wi-Fi configuration
-    wifi_ssid: "{{ env_vars.WIFI_SSID | default(lookup('env','WIFI_SSID')) }}"
+    wifi_ssid: "{{ lookup('ansible.builtin.env', 'WIFI_SSID') }}"
     #wifi_ssid: "{{ lookup('ansible.builtin.env', 'WIFI_SSID') }}" #, default='Mio4') }}"
-    wifi_password: "{{ env_vars.WIFI_PASSWORD | default(lookup('env','WIFI_PASSWORD')) }}" #, default='ceffxpnfax') }}"
+    wifi_password: "{{ lookup('ansible.builtin.env', 'WIFI_PASSWORD') }}" #, default='ceffxpnfax') }}"
     
     # Configuration file paths
     netplan_file: "/etc/netplan/001-gateway.yaml"
@@ -137,4 +136,3 @@ all:
       "120_local.rules":
         enabled: true
         mode: "ids"
-

@@ -17,12 +17,15 @@
 set -euo pipefail
 IFS=$'\n\t' 
 
-# Load environment variables if .env exists
-if [[ -f .env ]]; then
-    export $(grep -v '^#' .env | xargs)
+# Load environment variables
+if [[ ! -f .env ]]; then
+    echo "Error: .env file not found" >&2
+    exit 1
 fi
 
-export $(grep -v '^#' .env | xargs)
+set -a
+source .env
+set +a
 
 
 # Validate trusted_mac
@@ -34,5 +37,4 @@ ansible-playbook -K -i inventory.yaml ansible_deployment/gateway_setup_playbook.
 ansible-playbook -K -i inventory.yaml ansible_deployment/suricata_setup_playbook.yaml
 
 ansible-playbook -K -i inventory.yaml ansible_deployment/rules_setup_playbook.yaml 
-
 
