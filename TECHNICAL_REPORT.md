@@ -1,12 +1,12 @@
-<p align="center">
+<!--p align="center">
   <img src="images/icon.png" alt="Suricata IPS SBC Gateway icon" width="112" height="112">
-</p>
+</p-->
 
 <h1 align="center">Lab Protocol Security Exercise: Suricata IPS SBC Gateway</h1>
 
 <p align="center">
   FH Technikum Wien - IT Security Lab 2026<br>
-  Mosudi Isiaka O., io24m006@technikum-wien.at, +43 68120662665
+  Mosudi Isiaka O., io24m006@technikum-wien.at, +4368120662665
 </p>
 
 ---

@@ -1,0 +1,13 @@
+# .env file for Ansible configuration and WiFi credentials
+TARGET_IP=IP_ADDRESS_OF_SBC
+ANSIBLE_USER=LOGIN_USER_OF_SBC
+ANSIBLE_SSH_KEY=~/.ssh/id_rsa
+
+# WiFi credentials (sensitive)
+WIFI_SSID=WiFi_ssid
+WIFI_PASSWORD=WiFi_password
+
+# Trusted MAC addresses
+# my laptop
+trusted_mac=B4:69:21:75:B0:8E 
+#trusted_macs=B4:69:21:75:B0:8E,66:77:88:99:AA:BB
