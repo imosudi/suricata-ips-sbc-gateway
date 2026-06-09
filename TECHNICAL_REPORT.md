@@ -532,12 +532,30 @@ sudo systemctl restart suricata
 
 The current implementation assumes:
 
-- The SBC has one LAN interface and one WAN interface.
-- The WAN interface can obtain an upstream address through DHCP.
+- The SBC is a Debian-based Orange Pi, Raspberry Pi, or comparable single board
+  computer with systemd, Netplan, iptables, and `netfilter-persistent`
+  available.
+- The SBC has an Ethernet NIC named `eth0`, used as the protected LAN
+  interface.
+- The SBC has a WLAN interface named `wlan0`, used as the upstream WAN
+  interface.
+- The WAN interface can obtain an upstream address through DHCP and remains
+  reachable for SSH during provisioning.
+- The LAN interface is dedicated to the protected lab network and is configured
+  as `10.10.10.1/24` by default.
 - The LAN is IPv4-based and uses the default `10.10.10.0/24` subnet unless
   changed in `inventory.yaml`.
-- The operator has SSH and sudo access to the gateway.
+- LAN clients obtain DHCP leases from the SBC in the default
+  `10.10.10.100` - `10.10.10.200` range.
+- No other DHCP server is active on the protected LAN segment.
+- The control node has SSH and sudo access to the gateway.
+- The Ansible controller has a local `.env` file with `TARGET_IP`,
+  `ANSIBLE_USER`, `ANSIBLE_SSH_KEY`, `WIFI_SSID`, `WIFI_PASSWORD`, and trusted
+  host values used by the inventory and playbooks.
+- The deployment can temporarily modify network configuration, iptables rules,
+  DHCP service settings, Suricata configuration, and the login MOTD on the SBC.
 - The validation harness can SSH/SCP into the gateway to collect evidence.
+- Suricata is inserted inline through NFQUEUE queue `0`.
 - HTTPS payload inspection is not performed; TLS rules rely on metadata such as
   SNI or certificate subjects.
 
@@ -546,6 +564,7 @@ Important constraints:
 - NFQUEUE introduces userspace packet inspection overhead.
 - Performance depends heavily on SBC CPU, memory, storage, and network
   interface quality.
+- Wi-Fi WAN throughput and stability may limit end-to-end gateway performance.
 - Some Suricata keywords behave differently depending on capture mode. For
   example, Ethernet MAC matching is better handled in iptables when operating
   through NFQUEUE.
@@ -584,7 +603,7 @@ Recommended improvements include:
 
 - Add CI checks for shell syntax, Ansible linting, and Markdown links.
 - Convert `ids_ips_evaluation.sh` into a compatibility wrapper or formally
-  retire it after migration is complete.
+  retire it after migration is complete (On going).
 - Add example IoT segmentation profiles for device groups such as cameras,
   sensors, smart plugs, and management workstations.
 - Add optional VPN or jump-host guidance for secure remote administration of
@@ -612,10 +631,18 @@ harness gives measurable feedback about detection, prevention, and operational
 impact.
 
 ## References
-
-- [README.md](./README.md)
-- [ids_ips_evaluation/README.md](./ids_ips_evaluation/README.md)
-- [inventory.yaml](./inventory.yaml)
-- [ansible_deployment/gateway_setup_playbook.yaml](./ansible_deployment/gateway_setup_playbook.yaml)
-- [ansible_deployment/suricata_setup_playbook.yaml](./ansible_deployment/suricata_setup_playbook.yaml)
-- [ansible_deployment/rules_setup_playbook.yaml](./ansible_deployment/rules_setup_playbook.yaml)
+- [Intrusion Detection System (IDS) Vs Intrusion Prevention System (IPS)](https://www.checkpoint.com/cyber-hub/network-security/what-is-an-intrusion-detection-system-ids/ids-vs-ips/)
+- [Suricata](https://suricata.io/)
+- [Network Address Translation](https://www.vmware.com/topics/network-address-translation)
+- [Ansible](https://www.ansible.com/)
+- [Ansible Collaborative](https://www.redhat.com/en/ansible-collaborative)
+- [Ansible community documentation](https://docs.ansible.com/)
+- [Netplan](https://netplan.io/)
+- [Netfilter](https://www.netfilter.org/)
+- [Single-board computer (SBC)](https://en.wikipedia.org/wiki/Single-board_computer)
+- [Ornage Pi](https://www.orangepi.org/)
+- [Raspberry Pi](http://www.raspberrypi.org/)
+- [Orange Pi 3](http://www.orangepi.org/html/hardWare/computerAndMicrocontrollers/details/Orange-Pi-3.html)
+- [Debian](https://www.debian.org/)
+- [Ubuntu](https://ubuntu.com/)
+- [Kali Linux](https://kali.org/)

@@ -52,7 +52,8 @@ all:
     dns_secondary: "1.1.1.1"
     
     # Trusted MAC/IP address for testing  and troubleshooting
-    trusted_mac: "B4:69:21:75:B0:8E"
+    trusted_mac: "{{ lookup('ansible.builtin.env', 'TRUSTED_MAC') }}"
+    #trusted_mac: "B4:69:21:75:B0:8E"
     trusted_ip: "10.68.12.241"
 
     # Wi-Fi configuration
@@ -95,7 +96,7 @@ all:
     suricata_pid:           "/run/suricata.pid"
     motd_target: /etc/update-motd.d/10-orangepi-header
     motd_backup: /etc/update-motd.d/10-orangepi-header_backup
-    motd_source: motd.txt
+    motd_source: "{{ inventory_dir }}/motd.txt"
     
     # Rule module toggle map 
     # Set any module to true/false to include/exclude in rule enforcement

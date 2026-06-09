@@ -116,6 +116,30 @@ Validation machine:
 - Attack tools such as `nmap`, `hping3`, `hydra`, `swaks`, `tcpdump`, `curl`,
   `dig`, and `netcat`.
 
+## Deployment Assumptions
+
+The default lab configuration assumes:
+
+- The SBC has an Ethernet NIC named `eth0` for the protected LAN.
+- The SBC has a WLAN interface named `wlan0` for the upstream WAN.
+- `wlan0` receives its upstream address through DHCP and remains reachable for
+  SSH during deployment.
+- `eth0` is dedicated to the protected LAN and is configured as
+  `10.10.10.1/24`.
+- LAN clients receive DHCP leases from the SBC in the
+  `10.10.10.100` - `10.10.10.200` range.
+- No other DHCP server is active on the protected LAN segment.
+- The deployment is IPv4-focused; IPv6 routing and inspection are not part of
+  the default setup.
+- The target system uses Debian/Ubuntu-style networking, systemd services,
+  Netplan, iptables, and `netfilter-persistent`.
+- The controller has SSH key access to the SBC and the remote user can use
+  `sudo`.
+- A local `.env` file provides `TARGET_IP`, `ANSIBLE_USER`,
+  `ANSIBLE_SSH_KEY`, `WIFI_SSID`, `WIFI_PASSWORD`, and trusted host values.
+- Suricata runs inline through NFQUEUE queue `0`; encrypted TLS payloads are not
+  decrypted, so TLS rules rely on metadata such as SNI or certificate subjects.
+
 ## Quick Start
 
 1. Review and edit the lab variables:

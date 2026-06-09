@@ -165,11 +165,30 @@
         - name: Wait for interfaces to stabilize
           ansible.builtin.pause:
             seconds: 3
+
+        - name: Ensure LAN interface is administratively up
+          ansible.builtin.command: ip link set {{ lan_iface }} up
+          changed_when: false
+
+        - name: Ensure LAN interface has expected IPv4 address
+          ansible.builtin.command: ip addr replace {{ lan_cidr }} dev {{ lan_iface }}
+          changed_when: false
         
         - name: Verify LAN interface address
           ansible.builtin.shell: ip -4 addr show {{ lan_iface }} | awk '/inet / {print $2}'
           register: lan_addr_check
           changed_when: false
+
+        - name: Assert LAN interface address is configured
+          assert:
+            that:
+              - lan_addr_check.stdout == lan_cidr
+            fail_msg: >-
+              {{ lan_iface }} does not have {{ lan_cidr }} after netplan apply.
+              Current IPv4 addresses: {{ lan_addr_check.stdout | default('none', true) }}.
+              DHCP cannot start until the listening interface has an IPv4 address
+              in the configured subnet.
+            success_msg: "{{ lan_iface }} has expected address {{ lan_cidr }}"
         
         - name: Display LAN interface address
           debug:
@@ -288,6 +307,20 @@
             backup: yes
           register: dhcp_backup
           failed_when: false
+
+        - name: Remove duplicate DHCP IPv4 interface declarations
+          ansible.builtin.replace:
+            path: "{{ dhcp_defaults }}"
+            regexp: '(?m)^INTERFACESv4=.*\n?'
+            replace: ''
+          failed_when: false
+
+        - name: Remove duplicate DHCP IPv6 interface declarations
+          ansible.builtin.replace:
+            path: "{{ dhcp_defaults }}"
+            regexp: '(?m)^INTERFACESv6=.*\n?'
+            replace: ''
+          failed_when: false
         
         - name: Configure DHCP listening interface
           ansible.builtin.lineinfile:
@@ -327,6 +360,11 @@
               #     hardware ethernet AA:BB:CC:DD:EE:FF;
               #     fixed-address 10.10.10.10;
               # }
+
+        - name: Validate DHCP configuration syntax
+          ansible.builtin.command: dhcpd -t -cf {{ dhcp_conf }}
+          register: dhcp_configtest
+          changed_when: false
         
         - name: Enable and start isc-dhcp-server
           ansible.builtin.systemd:
@@ -348,8 +386,42 @@
           assert:
             that:
               - dhcp_status.status.ActiveState == 'active'
-            fail_msg: "isc-dhcp-server failed to start. Check logs with: journalctl -u isc-dhcp-server -n 30"
+            fail_msg: "isc-dhcp-server is not active; collecting diagnostics in the next tasks."
             success_msg: "isc-dhcp-server is active and running"
+          ignore_errors: yes
+          register: dhcp_active_assert
+
+        - name: Collect DHCP service diagnostics
+          ansible.builtin.command: systemctl status isc-dhcp-server --no-pager -l
+          register: dhcp_failure_status
+          changed_when: false
+          failed_when: false
+          when: dhcp_active_assert is failed
+
+        - name: Collect DHCP journal diagnostics
+          ansible.builtin.command: journalctl -u isc-dhcp-server -n 40 --no-pager
+          register: dhcp_failure_journal
+          changed_when: false
+          failed_when: false
+          when: dhcp_active_assert is failed
+
+        - name: Collect LAN interface diagnostics
+          ansible.builtin.command: ip -br addr show {{ lan_iface }}
+          register: dhcp_failure_iface
+          changed_when: false
+          failed_when: false
+          when: dhcp_active_assert is failed
+
+        - name: Fail with DHCP diagnostics
+          ansible.builtin.fail:
+            msg:
+              - "isc-dhcp-server failed to start."
+              - "Interface: {{ dhcp_failure_iface.stdout | default('unavailable') }}"
+              - "systemctl status:"
+              - "{{ dhcp_failure_status.stdout_lines | default([]) }}"
+              - "journalctl:"
+              - "{{ dhcp_failure_journal.stdout_lines | default([]) }}"
+          when: dhcp_active_assert is failed
         
         - name: Display DHCP server status
           ansible.builtin.command: systemctl status isc-dhcp-server --no-pager -l
@@ -488,7 +560,6 @@
           - "  sudo systemctl status isc-dhcp-server"
           - "  sysctl net.ipv4.ip_forward"
           - ""
-          - "When ready to install Suricata IPS, run the IPS setup playbook."
+          - "To install Suricata IPS, run the IPS setup playbook."
           - ""
-
 
