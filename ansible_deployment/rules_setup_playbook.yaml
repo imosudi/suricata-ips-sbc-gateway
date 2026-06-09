@@ -197,7 +197,8 @@
           {{ action }} tls $HOME_NET any -> $EXTERNAL_NET any (msg:"LAB TLS SNI example.com {{ action | upper }}"; flow:established,to_server; tls.sni; content:"example.com"; nocase;  sid:9000401; rev:2;)
  
           # example.org
-          {{ action }} tls $HOME_NET any -> $EXTERNAL_NET any (msg:"LAB TLS SNI example.org {{ action | upper }}"; low:established,to_server; tls.sni; content:"example.org"; nocase; sid:9000402; rev:2;)
+          {{ action }} tls $HOME_NET any -> $EXTERNAL_NET any (msg:"LAB TLS SNI example.org {{ action | upper }}"; flow:established,to_server; tls.sni; content:"example.org"; nocase; sid:9000402; rev:2;)
+
  
           # example.net
           {{ action }} tls $HOME_NET any -> $EXTERNAL_NET any (msg:"LAB TLS SNI example.net {{ action | upper }}"; flow:established,to_server; tls.sni; content:"example.net"; nocase; sid:9000403; rev:2;)

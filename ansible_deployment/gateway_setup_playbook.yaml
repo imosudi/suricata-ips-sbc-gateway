@@ -2,7 +2,7 @@
 ---
 # gateway_setup_playbook.yaml
 # Ansible playbook for Gateway System Setup
-# SBC: Single Board Computer - Orange Pi / Ubuntu 24.04 LTS / Debian 12
+# SBC: Single Board Computer - Orange Pi / Raspberry Pi / Ubuntu 24.04 LTS / Debian 12
 # Mosudi I.O, FH Technikum Wien - IT Security Lab 2026
 #
 # Usage:

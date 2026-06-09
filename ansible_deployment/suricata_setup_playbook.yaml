@@ -297,7 +297,7 @@
         name: suricata
         state: restarted
 
-    - name: Wait for Suricata to initialize
+    - name: Wait for Suricata to initialise
       pause:
         seconds: 5
 

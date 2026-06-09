@@ -26,6 +26,9 @@ set -a
 source .env
 set +a
 
+
+
+
 # Validate trusted_mac
 #[[ -z "${trusted_mac:-}" ]] && err "trusted_mac not set in environment"
 #[[ -z "${trusted_mac:-}" ]] && { echo "Error: trusted_mac not set in environment"; exit 1; }
