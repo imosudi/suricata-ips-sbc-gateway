@@ -89,29 +89,82 @@ The default inventory uses:
 ## 3. Repository Structure
 
 ```text
-.
-├── ansible_deployment/
-│   ├── gateway_setup_playbook.yaml
-│   ├── suricata_setup_playbook.yaml
-│   └── rules_setup_playbook.yaml
-├── foundation/
-│   ├── gateway_setup.sh
-│   ├── suricata_setup.sh
-│   └── rules_setup.sh
-├── ids_ips_evaluation/
-│   ├── attacks/
-│   ├── collectors/
-│   ├── analyzers/
-│   ├── reports/
-│   ├── config/
-│   └── validation_harness.sh
-├── images/
-│   ├── icon.png
-│   └── icon.svg
+suricata-ips-sbc-gateway
+├── ansible_deployment
+│   ├── gateway_setup_playbook.yaml
+│   ├── rules_setup_playbook.yaml
+│   └── suricata_setup_playbook.yaml
+├── env_sample
+├── foundation
+│   ├── gateway_setup.sh
+│   ├── rules_setup.sh
+│   └── suricata_setup.sh
+├── ids_ips_evaluation
+│   ├── analyzers
+│   │   ├── detection_score.py
+│   │   ├── false_positive.py
+│   │   ├── grading.py
+│   │   ├── ips_score.py
+│   │   ├── latency_score.py
+│   │   ├── sid_mapper.py
+│   │   └── throughput_score.py
+│   ├── archive
+│   ├── attacks
+│   │   ├── benign.sh
+│   │   ├── dns.sh
+│   │   ├── ftp.sh
+│   │   ├── http.sh
+│   │   ├── icmp.sh
+│   │   ├── policy.sh
+│   │   ├── scan.sh
+│   │   ├── smtp.sh
+│   │   ├── ssh.sh
+│   │   └── tls.sh
+│   ├── collectors
+│   │   ├── environment_collector.sh
+│   │   ├── eve_collector.sh
+│   │   ├── pcap_collector.sh
+│   │   ├── pcap_stop.sh
+│   │   ├── performance_collector.sh
+│   │   └── stats_collector.sh
+│   ├── config
+│   │   ├── attack_profiles.yaml
+│   │   ├── lab.conf
+│   │   ├── rule_mapping.yaml
+│   │   ├── scoring.conf
+│   │   └── targets.conf
+│   ├── logs
+│   ├── pcaps
+│   ├── README.md
+│   ├── reports
+│   │   ├── csv_report.py
+│   │   ├── html_report.py
+│   │   ├── report_generator.py
+│   │   └── templates
+│   ├── requirements.txt
+│   ├── results
+│   └── validation_harness.sh
+├── ids_ips_evaluation.sh
+├── images
+│   ├── icon.png
+│   ├── icon.svg
+│   └── screenshots
+│       ├── 00_repository_tree_structure.png
+│       ├── 01_ansible_gateway_deployment_complete.png
+│       ├── 02_setup_orchestration.png
+│       ├── 03_suricata_rules_validation_84_active.png
+│       ├── 04_ssh_gateway_connection.png
+│       ├── 05_gateway_system_info_ubuntu_arm64.png
+│       ├── 06_suricata_journalctl_service_status.png
+│       └── 07_suricata_installation_success.png
 ├── inventory.yaml
+├── LICENSE
 ├── main.sh
+├── motd.txt
 ├── README.md
-└── LICENSE
+├── secrets.yml
+└── TECHNICAL_REPORT.md
+
 ```
 
 The `ansible_deployment/` directory is the primary automation path. The
