@@ -175,14 +175,33 @@ Kali Linux.
 
 ## 4. Deployment Workflow
 
+images/screenshots/00_repository_tree_structure.png
+
 The top-level `main.sh` script orchestrates the Ansible deployment in three
 stages:
+
+images/screenshots/01_ansible_gateway_deployment_complete.png
 
 ```text
 1. ansible_deployment/gateway_setup_playbook.yaml
 2. ansible_deployment/suricata_setup_playbook.yaml
 3. ansible_deployment/rules_setup_playbook.yaml
 ```
+
+images/screenshots/02_setup_orchestration.png
+
+
+images/screenshots/03_suricata_rules_validation_84_active.png
+
+
+images/screenshots/04_ssh_gateway_connection.png
+
+images/screenshots/05_gateway_system_info_ubuntu_arm64.png
+
+images/screenshots/06_suricata_journalctl_service_status.png
+
+images/screenshots/07_suricata_installation_success.png
+
 
 The inventory is parameterized through `inventory.yaml` and environment values
 such as `TARGET_IP`, `ANSIBLE_USER`, `ANSIBLE_SSH_KEY`, `WIFI_SSID`, and
