@@ -18,7 +18,7 @@
 #   5. ISC DHCP server configuration and startup
 #   6. Custom MOTD deployment
 
-- name: Gateway System Setup for SBC (Raspberry Pi/Orange Pi)
+- name: Gateway System Setup for SBC (Orange Pi/ Raspberry Pi)
   hosts: all
   become: yes
   gather_facts: yes
