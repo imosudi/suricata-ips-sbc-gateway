@@ -177,11 +177,14 @@ Kali Linux.
 <p>
 <img src="images/screenshots/00_repository_tree_structure.png" alt="Repository tree structure">
 </p>
+Figure 1: Repository tree structure.
+
 The top-level `main.sh` script orchestrates the Ansible deployment in three
 stages:
 <p>
 <img src="images/screenshots/01_setup_orchestration.png" alt="Ansible gateway deployment complete">
 </p>
+Figure 2: Ansible gateway deployment complete.
 
 
 The deployment story begins with the completed gateway provisioning run. The
@@ -196,48 +199,54 @@ that the SBC gateway was configured and ready for the next stage.
 <p>
 <img src="images/screenshots/02_ansible_gateway_deployment_complete.png" alt="Setup orchestration">
 </p>
+Figure 3: Setup orchestration.
 
 
-The second screenshot captures the orchestration sequence. It displays how
+This captures the orchestration sequence. It displays how
 `main.sh` invokes the three Ansible playbooks in order, moving from basic
 network gateway setup to Suricata installation and rule deployment.
 <p>
 <img src="images/screenshots/03_suricata_rules_validation_84_active.png" alt="Suricata rules validation">
 </p>
+Figure 4: Suricata rules validation.
 
 
-The third screenshot documents Suricata rule validation. It shows 84 active
+
+The Suricata rule validation. It shows 84 active
 rules loaded successfully, confirming that the modular rule set was enabled and
 validated before the gateway entered production.
 <p>
 <img src="images/screenshots/04_ssh_gateway_connection.png" alt="SSH gateway connection">
 </p>
+Figure 5: SSH gateway connection.
 
 
-After deployment, remote access is verified. The SSH connection snapshot
+
+After deployment, remote access is verified. The SSH connection 
 proves the gateway host is reachable and manageable over the network.
 
 <p>
 <img src="images/screenshots/05_gateway_system_info_ubuntu_arm64.png" alt="Gateway system info">
 </p>
+Figure 6: IPS Gateway system info.
 
 
-This screenshot records the gateway system information on Ubuntu ARM64,
+The gateway system information clearly indicating Ubuntu ARM64 platform,
 providing hardware and OS details for the SBC platform used in the lab.
 <p>
 <img src="images/screenshots/06_suricata_journalctl_service_status.png" alt="Suricata journalctl service status">
 </p>
+Figure 7: Suricata journalctl service status.
 
 
-
-The service status screenshot proves Suricata is running under systemd. It
+The service status proves Suricata is running under systemd. It
 shows `journalctl` output for the Suricata service and confirms the daemon is
 active after the deployment.
 
 <p>
 <img src="images/screenshots/07_suricata_installation_success.png" alt="Suricata installation success">
 </p>
-
+Figure 8: Suricata installation details
 
 
 
