@@ -100,7 +100,7 @@ suricata-ips-sbc-gateway
 │   ├── rules_setup.sh
 │   └── suricata_setup.sh
 ├── ids_ips_evaluation
-│   ├── analyzers
+│   ├── analysers
 │   │   ├── detection_score.py
 │   │   ├── false_positive.py
 │   │   ├── grading.py
@@ -251,7 +251,7 @@ Figure 8: Suricata installation details
 
 
 
-The inventory is parameterized through `inventory.yaml` and environment values
+The inventory is parameterised through `inventory.yaml` and environment values
 such as `TARGET_IP`, `ANSIBLE_USER`, `ANSIBLE_SSH_KEY`, `WIFI_SSID`, and
 `WIFI_PASSWORD`. A local `.env` file is used for sensitive or environment-
 specific configuration.
@@ -409,7 +409,7 @@ environments. Instead of relying only on each IoT device to protect itself, the
 gateway becomes a shared enforcement and observation point for the network
 segment. All devices behind the gateway benefit from common controls:
 
-- Centralized traffic inspection before packets leave or enter the protected
+- Centralised traffic inspection before packets leave or enter the protected
   LAN.
 - Protocol and policy enforcement for devices that cannot run local security
   agents.
@@ -444,7 +444,7 @@ HTTP, HTTPS, SSH, Telnet, FTP, MQTT, CoAP, or vendor-specific ports.
 
 This is especially useful for devices that only support self-signed
 certificates. The gateway cannot magically make an insecure device interface
-secure, but it can reduce exposure by ensuring that only authorized management
+secure, but it can reduce exposure by ensuring that only authorised management
 paths can reach that interface. It can also alert on suspicious access attempts,
 unexpected protocols, brute-force behavior, or data exfiltration patterns.
 
@@ -488,7 +488,7 @@ Its main functions are:
 
 | Module | Tools | Coverage |
 |--------|-------|----------|
-| `icmp` | `hping3`, `ping` | Floods, oversized packets, timestamp traffic. |
+| `icmp` | `hping3`, `ping` | Floods, oversised packets, timestamp traffic. |
 | `scan` | `nmap` | SYN, NULL, XMAS, version, and OS scans. |
 | `dns` | `dig` | NXDOMAIN, ANY, and tunnel-like queries. |
 | `ssh` | `ssh`, `hydra` | Brute force, banner grab, credential testing. |
@@ -564,7 +564,7 @@ ids_ips_evaluation/
 ├── config/                 Lab, target, scoring, profile, and SID mapping data
 ├── attacks/                One attack module per protocol or behavior
 ├── collectors/             Evidence collection from Kali and gateway
-├── analyzers/              Python scoring and attribution logic
+├── analysers/              Python scoring and attribution logic
 ├── reports/                HTML, CSV, and aggregate report generation
 ├── logs/                   Collected EVE JSON and session logs
 ├── pcaps/                  Local and gateway packet captures
@@ -579,15 +579,15 @@ The migration improves the project in several ways:
 | Configuration | Interactive prompts and inline variables. | Reusable files such as `config/lab.conf`, `config/targets.conf`, and `config/scoring.conf`. |
 | Attacks | Fixed command sequence in one script. | Separate protocol modules under `attacks/`. |
 | Collection | Inline SSH, jq, tcpdump, and report extraction. | Dedicated collectors for EVE, stats, PCAP, performance, and environment data. |
-| Analysis | Basic alert summaries and throughput extraction. | Python analyzers for detection, IPS blocking, latency, throughput, false positives, grading, and SID mapping. |
+| Analysis | Basic alert summaries and throughput extraction. | Python analysers for detection, IPS blocking, latency, throughput, false positives, grading, and SID mapping. |
 | Reporting | Plain text final report. | JSON results plus CSV and HTML report generation. |
 | Maintainability | Any change risks affecting the entire workflow. | Modules can be tested and adjusted independently. |
-| Extensibility | Adding a test expands the already-large shell file. | New attacks, collectors, or analyzers can be added as new files. |
+| Extensibility | Adding a test expands the already-large shell file. | New attacks, collectors, or analysers can be added as new files. |
 
 The migration should be understood as an architectural refactor rather than a
 complete replacement of the original idea. The original script defines the
 prototype workflow and remains useful as a compact reference for the evaluation
-sequence. The directory-based harness formalizes that workflow into smaller
+sequence. The directory-based harness formalises that workflow into smaller
 components with clearer responsibilities.
 
 The recommended long-term role of `ids_ips_evaluation.sh` is one of the

@@ -2,7 +2,7 @@
 # =============================================================================
 # Gateway System Setup Script
 # SBC: Single Board Computer - 
-# Raspberry Pi, Orange Pi / Ubuntu 24.04 LTS / Debian 12
+# Orange Pi, Raspberry Pi / Ubuntu 24.04 LTS / Debian 12
 # Mosudi I.O, FH Technikum Wien - IT Security Lab 2026
 #
 # Usage:
@@ -21,6 +21,7 @@
 
 set -euo pipefail          # exit on error, undefined var, or pipe failure
 IFS=$'\n\t'
+source .env  # Load environment variables from .env file (WIFI_SSID, WIFI_PASSWORD, etc.)
 
 # ── CONFIGURATION ─────────────────────────────────────────────────────────────
 # Edit these values to match your environment before running the script.
@@ -43,8 +44,8 @@ DNS_PRIMARY="9.9.9.9"               # Quad9 - primary DNS for clients: Security/
 DNS_SECONDARY="1.1.1.1"             # Cloudflare - secondary DNS for clients
 #DNS_TERTIARY="8.8.8.8"              # Google - tertiary DNS for clients
 
-WIFI_SSID="Mio4" #"SSID_NAME"               # Wi-Fi network name for WAN uplink
-WIFI_PASSWORD="ceffxpnfax"            # Wi-Fi password (WPA2-PSK)
+WIFI_SSID=$WIFI_SSID # "Mio4" #"WIFI_SSID"               # Wi-Fi network name for WAN uplink
+WIFI_PASSWORD=$WIFI_PASSWORD #"ceffxpnfax"            # Wi-Fi password (WPA2-PSK)
 
 NETPLAN_FILE="/etc/netplan/001-gateway.yaml"
 SYSCTL_FILE="/etc/sysctl.d/99-gateway.conf"
@@ -436,7 +437,7 @@ main() {
     echo -e "\n${BOLD}${BLUE}"
     echo "  ╔══════════════════════════════════════════════════════════╗"
     echo "  ║   Gateway Setup Script                                   ║"
-    echo "  ║   Raspberry Pi / Orange Pi                               ║"
+    echo "  ║   Orange Pi / Raspberry Pi                               ║"
     echo "  ║   Ubuntu 24.04 / Debian 12                               ║"
     echo "  ║   Mosudi I.O, FH Technikum Wien - IT Security Lab 2026   ║"
     echo "  ╚══════════════════════════════════════════════════════════╝"

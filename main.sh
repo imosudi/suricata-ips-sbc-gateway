@@ -26,6 +26,7 @@ set -a
 source .env
 set +a
 
+#export $(grep -v '^#' .env | xargs)
 
 
 

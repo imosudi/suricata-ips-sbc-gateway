@@ -115,62 +115,43 @@
           {% set mode   = suricata_rule_modules["30_http.rules"].mode | default('ids') %}
           {% set action = 'alert' if mode == 'ids' else 'drop' if mode == 'ips' else 'pass' %}
  
+          # ── Block / detect HTTP access to example.[com|net|org] ─────────
+          # Covers:  GET http://example.com/...  and  Host: example.com headers.
+ 
+          # sid:9000300
+          {{ action }} http $HOME_NET any -> $EXTERNAL_NET 80 (msg:"LAB HTTP Host example.com {{ action | upper }}"; flow:established,to_server; content:"example.com"; http_host; sid:9000300; rev:5;)
+
+          # sid:9000301
+          {{ action }} http $HOME_NET any -> $EXTERNAL_NET 80 (msg:"LAB HTTP Host example.net {{ action | upper }}"; flow:established,to_server; content:"example.net"; http_host; sid:9000301; rev:5;)
+
+          # sid:9000302
+          {{ action }} http $HOME_NET any -> $EXTERNAL_NET 80 (msg:"LAB HTTP Host example.org {{ action | upper }}"; flow:established,to_server; content:"example.org"; http_host; sid:9000302; rev:5;)
+          
+ 
           # ── Lab requirement: "Big Bang Theory" in HTTP ──────────────────
           # URI / query string — e.g. GET /search?q=Big+Bang+Theory
-          {{ action }} http $HOME_NET any -> $EXTERNAL_NET any \
-              (msg:"LAB HTTP Big Bang Theory in URI {{ action | upper }}"; \
-               flow:established,to_server; \
-               http.uri; content:"Big Bang Theory"; nocase; \
-               sid:9000300; rev:2;)
+          {{ action }} http $HOME_NET any -> $EXTERNAL_NET any (msg:"LAB HTTP Big Bang Theory in URI {{ action | upper }}"; flow:established,to_server;  http.uri; content:"Big Bang Theory"; nocase; sid:9000303; rev:2;)
  
           # POST / PUT request body — e.g. form submission
-          {{ action }} http $HOME_NET any -> $EXTERNAL_NET any \
-              (msg:"LAB HTTP Big Bang Theory in Request Body {{ action | upper }}"; \
-               flow:established,to_server; \
-               http.request_body; content:"Big Bang Theory"; nocase; \
-               sid:9000301; rev:2;)
+          {{ action }} http $HOME_NET any -> $EXTERNAL_NET any (msg:"LAB HTTP Big Bang Theory in Request Body {{ action | upper }}";  flow:established,to_server; http.request_body; content:"Big Bang Theory"; nocase;   sid:9000304; rev:2;)
  
           # Request headers — e.g. User-Agent or custom header
-          {{ action }} http $HOME_NET any -> $EXTERNAL_NET any \
-              (msg:"LAB HTTP Big Bang Theory in Request Header {{ action | upper }}"; \
-               flow:established,to_server; \
-               http.header; content:"Big Bang Theory"; nocase; \
-               sid:9000302; rev:2;)
+          {{ action }} http $HOME_NET any -> $EXTERNAL_NET any (msg:"LAB HTTP Big Bang Theory in Request Header {{ action | upper }}";  flow:established,to_server; http.header; content:"Big Bang Theory"; nocase; sid:9000305; rev:2;)
  
           # Server response body — content served back to client
-          {{ action }} http $EXTERNAL_NET any -> $HOME_NET any \
-              (msg:"LAB HTTP Big Bang Theory in Response Body {{ action | upper }}"; \
-               flow:established,to_client; \
-               http.response_body; content:"Big Bang Theory"; nocase; \
-               sid:9000303; rev:2;)
+          {{ action }} http $EXTERNAL_NET any -> $HOME_NET any (msg:"LAB HTTP Big Bang Theory in Response Body {{ action | upper }}"; flow:established,to_client; http.response_body; content:"Big Bang Theory"; nocase;  sid:9000306; rev:2;)
  
-          # ── Supplementary HTTP detection rules ──────────────────────────
-          # SQL injection in URI
-          alert http any any -> $HOME_NET any \
-              (msg:"HTTP SQL Injection Attempt"; \
-               flow:established,to_server; \
-               http.uri; content:"OR"; nocase; pcre:"/(\'|%27).*(OR|AND).*(=|\')/i"; \
-               sid:9000310; rev:1;)
+          # ── Supplementary HTTP detection rules ────────────────────────── 
+          # SQL injection in URI (inbound to server)
+          alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"HTTP SQL Injection Attempt in URI"; flow:established,to_server; http.uri; content:"OR"; nocase; pcre:"/(\'|%27).*(OR|AND).*(=|\')/i"; sid:9000310; rev:2;)
  
-          # Directory traversal
-          alert http any any -> $HOME_NET any \
-              (msg:"HTTP Directory Traversal"; \
-               flow:established,to_server; \
-               http.uri; content:"../"; \
-               sid:9000311; rev:1;)
+          # Directory traversal (inbound to server)
+          alert http $EXTERNAL_NET any -> $HOME_NET any  (msg:"HTTP Directory Traversal Attempt";  flow:established,to_server;   http.uri; content:"../";  sid:9000311; rev:2;)
  
-          # Scanner user-agents
-          alert http any any -> $HOME_NET any \
-              (msg:"HTTP sqlmap Scanner"; \
-               flow:established,to_server; \
-               http.user_agent; content:"sqlmap"; nocase; \
-               sid:9000312; rev:1;)
+          # Scanner user-agents (inbound to server)
+          alert http $EXTERNAL_NET any -> $HOME_NET any  (msg:"HTTP sqlmap Scanner Detected";  flow:established,to_server; http.user_agent; content:"sqlmap"; nocase; sid:9000312; rev:2;)
  
-          alert http any any -> $HOME_NET any \
-              (msg:"HTTP Nikto Scanner"; \
-               flow:established,to_server; \
-               http.user_agent; content:"Nikto"; nocase; \
-               sid:9000313; rev:1;)
+          alert http $EXTERNAL_NET any -> $HOME_NET any (msg:"HTTP Nikto Scanner Detected";  flow:established,to_server;  http.user_agent; content:"Nikto"; nocase;     sid:9000313; rev:2;)
  
     - name: "Deploy 40_tls.rules — TLS/SNI + certificate detection"
       when: suricata_rule_modules["40_tls.rules"]["enabled"] | bool
@@ -205,13 +186,13 @@
  
           # Certificate Subject CN detection (TLS 1.2 only)
           # example.com
-          alert tls any any -> any any (msg:"LAB TLS Certificate CN example.com ALERT"; tls.cert_subject; content:"example.com"; nocase; sid:9000404; rev:2;)
+          {{ action }} tls any any -> any any (msg:"LAB TLS Certificate CN example.com {{ action | upper }}"; tls.cert_subject; content:"example.com"; nocase; sid:9000404; rev:2;)
  
           # example.org
-          alert tls any any -> any any (msg:"LAB TLS Certificate CN example.org ALERT"; tls.cert_subject; content:"example.org"; nocase; sid:9000405; rev:2;)
+          {{ action }} tls any any -> any any (msg:"LAB TLS Certificate CN example.org {{ action | upper }}"; tls.cert_subject; content:"example.org"; nocase; sid:9000405; rev:2;)
  
           # example.net
-          alert tls any any -> any any (msg:"LAB TLS Certificate CN example.net ALERT"; tls.cert_subject; content:"example.net"; nocase; sid:9000406; rev:2;)
+          {{ action }} tls any any -> any any (msg:"LAB TLS Certificate CN example.net {{ action | upper }}"; tls.cert_subject; content:"example.net"; nocase; sid:9000406; rev:2;)
  
           # Supplementary TLS hygiene rules 
           # Deprecated TLS 1.0
@@ -248,32 +229,17 @@
  
           # ── Lab requirement: "Big Bang Theory" in Telnet ────────────────
           # Bidirectional — catches string in both client commands and server output
-          {{ action }} tcp any any <> any 23 \
-              (msg:"LAB Telnet Big Bang Theory {{ action | upper }}"; \
-               flow:established; \
-               content:"Big Bang Theory"; nocase; \
-               sid:9000500; rev:2;)
+          {{ action }} tcp any any <> any 23 (msg:"LAB Telnet Big Bang Theory {{ action | upper }}"; flow:established; content:"Big Bang Theory"; nocase;  sid:9000500; rev:2;)
  
           # ── Supplementary Telnet rules ──────────────────────────────────
           # Any established Telnet session — policy violation on modern networks
-          alert tcp any any -> $HOME_NET 23 \
-              (msg:"POLICY Telnet Session Initiated"; \
-               flow:to_server,established; \
-               sid:9000501; rev:1;)
+          {{ action }} tcp any any -> $HOME_NET 23  (msg:"POLICY Telnet Session Initiated";   flow:to_server,established;  sid:9000501; rev:1;)
  
           # Login prompt — identifies active interactive sessions
-          alert tcp any any -> $HOME_NET 23 \
-              (msg:"Telnet Login Prompt Detected"; \
-               flow:to_server,established; \
-               content:"login"; nocase; \
-               sid:9000502; rev:1;)
+          {{ action }} tcp any any -> $HOME_NET 23  (msg:"Telnet Login Prompt Detected";  flow:to_server,established; content:"login"; nocase;  sid:9000502; rev:1;)
  
           # Password field — potential credential capture
-          alert tcp any any -> $HOME_NET 23 \
-              (msg:"Telnet Password Field Detected"; \
-               flow:to_server,established; \
-               content:"password"; nocase; \
-               sid:9000503; rev:1;)
+          {{ action }} tcp any any -> $HOME_NET 23  (msg:"Telnet Password Field Detected"; flow:to_server,established; content:"password"; nocase;  sid:9000503; rev:1;)
 
     - name: "Deploy 60_scan.rules - Port scan detection"
       when: suricata_rule_modules["60_scan.rules"]["enabled"] | bool

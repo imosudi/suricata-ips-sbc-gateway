@@ -140,7 +140,7 @@ ids_ips_evaluation/
 │   └── rule_mapping.yaml   SID ranges → module names
 ├── attacks/                One script per protocol (all run on Kali)
 ├── collectors/             SSH/SCP pullers (run on Kali, reach gateway)
-├── analyzers/              Python scoring modules (run on Kali)
+├── analysers/              Python scoring modules (run on Kali)
 ├── reports/                HTML/CSV report generators
 ├── logs/                   Per-session harness logs + collected EVE
 ├── pcaps/                  Local tcpdump PCAPs + fetched gateway PCAPs

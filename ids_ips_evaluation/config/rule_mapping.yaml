@@ -1,6 +1,6 @@
 # =============================================================================
 # rule_mapping.yaml — Maps Suricata SID ranges/values to harness modules
-# Used by analyzers/sid_mapper.py to attribute detections to modules.
+# Used by analysers/sid_mapper.py to attribute detections to modules.
 # SID namespace: 9000001–9009999 (lab custom rules)
 # =============================================================================
 

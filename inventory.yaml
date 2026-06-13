@@ -33,6 +33,8 @@ all:
     #dns_primary: 9.9.9.9
     #dns_secondary: 1.1.1.1
 
+    # Routing mode: "route" or "nat"
+    routing_mode: "nat"     
 
     # LAN configuration
     lan_ip: "10.10.10.1"
@@ -76,6 +78,8 @@ all:
       - iptables-persistent
       - netfilter-persistent
       - isc-dhcp-server
+      - wpasupplicant
+      - wireless-tools
     
     # Suricata configuration
     nfqueue_num: 0
@@ -101,9 +105,12 @@ all:
     # Rule module toggle map 
     # Set any module to true/false to include/exclude in rule enforcement
     suricata_rule_modules:
+      # Pass through rules (bypass)
       "10_trusted.rules":
         enabled: true
-        mode: "bypass"        
+        mode: "bypass"    
+
+      # Basic rules (Required Tasks)  
       "20_icmp.rules":
         enabled: true
         mode: "ids"           
@@ -112,10 +119,12 @@ all:
         mode: "ids"
       "40_tls.rules":
         enabled: true
-        mode: "ids"
+        mode: "ips"
       "50_telnet.rules":
         enabled: true
         mode: "ips"
+
+      # Advanced rules (Optional Tasks)
       "60_scan.rules":
         enabled: true
         mode: "ips"

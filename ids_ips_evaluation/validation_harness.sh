@@ -128,7 +128,7 @@ preflight() {
     command -v nmap    >/dev/null 2>&1 || warn "nmap not found — scan module degraded"
     command -v hping3  >/dev/null 2>&1 || warn "hping3 not found — icmp module degraded"
     command -v hydra   >/dev/null 2>&1 || warn "hydra not found — ssh/ftp brute disabled"
-    command -v python3 >/dev/null 2>&1 || die  "python3 is required for analyzers"
+    command -v python3 >/dev/null 2>&1 || die  "python3 is required for analysers"
     command -v tcpdump >/dev/null 2>&1 || warn "tcpdump not found — local PCAP disabled"
 
     # Exclusion guard
@@ -221,10 +221,10 @@ run_collectors() {
         bash "$pcap_fetch" 2>&1 | tee -a "$SESSION_LOG" || true
 }
 
-# ── analyzers ─────────────────────────────────────────────────────────────────
-run_analyzers() {
-    log "Running analyzers..."
-    local ad="$HARNESS_DIR/analyzers"
+# ── analysers ─────────────────────────────────────────────────────────────────
+run_analysers() {
+    log "Running analysers..."
+    local ad="$HARNESS_DIR/analysers"
     local rd="$RESULTS_DIR"
 
     python3 "$ad/detection_score.py"   --session "$SESSION_ID" --out "$rd"
@@ -305,7 +305,7 @@ main() {
         run_collectors    # stop PCAP, fetch EVE/stats from gateway
     fi
 
-    run_analyzers
+    run_analysers
     generate_reports
     $DO_ARCHIVE && archive_session
 

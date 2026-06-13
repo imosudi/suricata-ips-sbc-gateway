@@ -21,4 +21,4 @@ ujson>=5.9.0            # fast JSON for EVE logs
 # Utilities
 python-dateutil>=2.9.0
 click>=8.1.7
-rich>=13.7.0            # pretty terminal output from Python analyzers
+rich>=13.7.0            # pretty terminal output from Python analysers
