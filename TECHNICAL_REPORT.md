@@ -558,7 +558,7 @@ The harness computes:
 | Latency impact | 20% | Gateway load during attack versus baseline. |
 | False positives | 20% | Alerts generated during benign traffic. |
 
-
+\n
 
 Grades are assigned as:
 
