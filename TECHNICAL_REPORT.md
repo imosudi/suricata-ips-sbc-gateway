@@ -199,7 +199,7 @@ The `ansible_deployment/` directory is the primary automation path. The
 `foundation/` directory mirrors the deployment logic as shell scripts and is
 useful when the operator wants direct command-level visibility. The
 `basic_ids_ips_evaluation/` directory contains local LAN-side rule validation
-for Suricata modules 20, 30, 40, and 50 from a protected Kali client. The
+for Suricata modules 20, 30, 40, and 50 from a Kali client withing the protected LAN. The
 `ids_ips_evaluation/` directory is a separate WAN-side validation harness
 intended to run from Kali Linux.
 
