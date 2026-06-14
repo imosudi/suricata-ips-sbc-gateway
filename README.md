@@ -73,7 +73,7 @@ Internet / WAN
 +-----------------------------+
      |
      v
-Protected LAN / Victim Hosts
+Protected LAN / IoT Devices
 ```
 
 Suricata receives forwarded packets through NFQUEUE, evaluates enabled rules,
@@ -84,11 +84,15 @@ and can alert or drop traffic depending on the configured rule action and mode.
 ```text
 .
 ├── ansible_deployment/       Gateway, Suricata, and rules playbooks
+├── basic_ids_ips_evaluation/  LAN-side rule validation harness for 20/30/40/50
 ├── foundation/               Manual setup scripts
-├── ids_ips_evaluation/       Kali validation harness and reports
+├── ids_ips_evaluation/       WAN-side Kali validation harness and reports
 ├── images/                   Project icon assets
 ├── inventory.yaml            Lab inventory and deployment variables
 ├── main.sh                   Ansible orchestration entry point
+├── motd.txt                  Optional login banner content
+├── README.md                 Project overview and architecture
+└── TECHNICAL_REPORT          Technical report
 ├── motd.txt                  Optional login banner content
 └── LICENSE
 ```
@@ -112,6 +116,10 @@ Controller machine:
 Validation machine:
 
 - Kali Linux or a compatible attacker host.
+- `basic_ids_ips_evaluation/` is intended for local LAN-side rule testing of
+  Suricata modules 20, 30, 40, and 50.
+- `ids_ips_evaluation/` is intended for broader WAN/external validation,
+  evidence collection, scoring, and reporting.
 - Python dependencies from `ids_ips_evaluation/requirements.txt`.
 - Attack tools such as `nmap`, `hping3`, `hydra`, `swaks`, `tcpdump`, `curl`,
   `dig`, and `netcat`.
@@ -163,10 +171,15 @@ sudo suricata -T -c /etc/suricata/suricata.yaml
 sudo systemctl status suricata
 ```
 
-4. Run the validation harness from Kali:
+4. Run one of the validation harnesses from Kali:
 
 ```bash
-cd ids_ips_evaluation
+# Local protected LAN rule tests for modules 20/30/40/50
+cd basic_ids_ips_evaluation
+sudo ./run_eval.sh
+
+# Broader WAN-side validation, scoring, and reporting
+cd ../ids_ips_evaluation
 pip install -r requirements.txt
 vi config/lab.conf
 vi config/targets.conf
@@ -194,11 +207,17 @@ foundation/rules_setup.sh
 
 ## Validation Harness
 
-The validation harness in `ids_ips_evaluation/` runs controlled traffic modules
-from Kali, collects gateway evidence over SSH/SCP, and produces scoring reports.
+The project contains two validation harnesses:
 
-See [ids_ips_evaluation/README.md](./ids_ips_evaluation/README.md) for the full
-harness workflow, configuration files, attack modules, and scoring model.
+- `basic_ids_ips_evaluation/` runs local LAN-side tests from Kali within the
+  protected network and validates Suricata rule modules 20, 30, 40, and 50.
+- `ids_ips_evaluation/` provides a more extensive WAN/attacker-side validation
+  harness with modular attacks, evidence collection, scoring, and reports.
+
+See [basic_ids_ips_evaluation/README.md](./basic_ids_ips_evaluation/README.md)
+for the local rule evaluation workflow, and
+[ids_ips_evaluation/README.md](./ids_ips_evaluation/README.md) for the full
+external validation harness workflow.
 
 
 ## License

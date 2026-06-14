@@ -24,7 +24,7 @@ Suricata rule sets.
 The repository provides two complementary deployment paths: Ansible playbooks
 for repeatable automated provisioning and shell scripts for manual,
 step-by-step setup. It also includes a Kali-based validation harness that
-generates test traffic, collects gateway evidence, and scores IDS/IPS behavior.
+generates test traffic, collects gateway evidence, and scores IDS/IPS behaviour.
 
 ## 1. Project Objectives
 
@@ -37,6 +37,9 @@ The main objectives of the project are:
   inspected before routing decisions complete.
 - Provide modular, protocol-specific Suricata rules that can run in alert,
   drop, or bypass modes.
+- Add custom rules to detect and block network traffic containing SSL/TLS certificate 
+  for domains example.com, example.org, and example.net; string "Big Bang Theory" for 
+  both HTTP and Telnet; ICMP Timestamp requests and responses; And more!
 - Automate deployment with Ansible while retaining manual shell equivalents for
   learning, auditing, and troubleshooting.
 - Validate the deployment with repeatable attack simulations, evidence
@@ -48,6 +51,12 @@ The gateway is intended for a lab topology where an SBC is placed between a
 WAN-facing network and a protected internal LAN. Client systems behind the
 gateway receive addresses from the SBC, route through it, and are monitored by
 Suricata as traffic crosses the forwarding path.
+
+<p>
+<img src="images/suricata_ips_gateway.png" alt="Suricata IPS SBC Gateway Architecture">
+</p>
+Figure 1: Suricata IPS SBC Gateway Architecture.
+
 
 ```text
 Internet / WAN
@@ -94,11 +103,28 @@ suricata-ips-sbc-gateway
 │   ├── gateway_setup_playbook.yaml
 │   ├── rules_setup_playbook.yaml
 │   └── suricata_setup_playbook.yaml
+├── basic_ids_ips_evaluation
+│   ├── eval.conf
+│   ├── README.md
+│   ├── rule-eval
+│   │   ├── analysers
+│   │   ├── archive
+│   │   ├── attacks
+│   │   ├── collectors
+│   │   ├── config
+│   │   ├── logs
+│   │   ├── pcaps
+│   │   ├── README.md
+│   │   ├── reports
+│   │   ├── results
+│   │   └── run_eval.sh
+│   └── run_eval.sh
 ├── env_sample
 ├── foundation
 │   ├── gateway_setup.sh
 │   ├── rules_setup.sh
 │   └── suricata_setup.sh
+├── generate_pdf.py
 ├── ids_ips_evaluation
 │   ├── analysers
 │   │   ├── detection_score.py
@@ -148,15 +174,17 @@ suricata-ips-sbc-gateway
 ├── images
 │   ├── icon.png
 │   ├── icon.svg
-│   └── screenshots
-│       ├── 00_repository_tree_structure.png
-│       ├── 01_ansible_gateway_deployment_complete.png
-│       ├── 02_setup_orchestration.png
-│       ├── 03_suricata_rules_validation_84_active.png
-│       ├── 04_ssh_gateway_connection.png
-│       ├── 05_gateway_system_info_ubuntu_arm64.png
-│       ├── 06_suricata_journalctl_service_status.png
-│       └── 07_suricata_installation_success.png
+│   ├── screenshots
+│   │   ├── 00_repository_tree_structure.png
+│   │   ├── 01_setup_orchestration.png
+│   │   ├── 02_ansible_gateway_deployment_complete.png
+│   │   ├── 03_suricata_rules_validation_84_active.png
+│   │   ├── 04_ssh_gateway_connection.png
+│   │   ├── 05_gateway_system_info_ubuntu_arm64.png
+│   │   ├── 06_suricata_journalctl_service_status.png
+│   │   └── 07_suricata_installation_success.png
+│   ├── suricata_ips_gateway.png
+│   └── suricata_ips_gateway.svg
 ├── inventory.yaml
 ├── LICENSE
 ├── main.sh
@@ -170,21 +198,23 @@ suricata-ips-sbc-gateway
 The `ansible_deployment/` directory is the primary automation path. The
 `foundation/` directory mirrors the deployment logic as shell scripts and is
 useful when the operator wants direct command-level visibility. The
-`ids_ips_evaluation/` directory is a separate test harness intended to run from
-Kali Linux.
+`basic_ids_ips_evaluation/` directory contains local LAN-side rule validation
+for Suricata modules 20, 30, 40, and 50 from a protected Kali client. The
+`ids_ips_evaluation/` directory is a separate WAN-side validation harness
+intended to run from Kali Linux.
 
 ## 4. Deployment Workflow
 <p>
 <img src="images/screenshots/00_repository_tree_structure.png" alt="Repository tree structure">
 </p>
-Figure 1: Repository tree structure.
+Figure 2: Repository tree structure.
 
 The top-level `main.sh` script orchestrates the Ansible deployment in three
 stages:
 <p>
 <img src="images/screenshots/01_setup_orchestration.png" alt="Ansible gateway deployment complete">
 </p>
-Figure 2: Ansible gateway deployment complete.
+Figure 3: Ansible gateway deployment complete.
 
 
 The deployment story begins with the completed gateway provisioning run. The
@@ -199,7 +229,7 @@ that the SBC gateway was configured and ready for the next stage.
 <p>
 <img src="images/screenshots/02_ansible_gateway_deployment_complete.png" alt="Setup orchestration">
 </p>
-Figure 3: Setup orchestration.
+Figure 4: Setup orchestration.
 
 
 This captures the orchestration sequence. It displays how
@@ -208,7 +238,7 @@ network gateway setup to Suricata installation and rule deployment.
 <p>
 <img src="images/screenshots/03_suricata_rules_validation_84_active.png" alt="Suricata rules validation">
 </p>
-Figure 4: Suricata rules validation.
+Figure 5: Suricata rules validation.
 
 
 
@@ -218,7 +248,7 @@ validated before the gateway entered production.
 <p>
 <img src="images/screenshots/04_ssh_gateway_connection.png" alt="SSH gateway connection">
 </p>
-Figure 5: SSH gateway connection.
+Figure 6: SSH gateway connection.
 
 
 
@@ -228,7 +258,7 @@ proves the gateway host is reachable and manageable over the network.
 <p>
 <img src="images/screenshots/05_gateway_system_info_ubuntu_arm64.png" alt="Gateway system info">
 </p>
-Figure 6: IPS Gateway system info.
+Figure 7: IPS Gateway system info.
 
 
 The gateway system information clearly indicating Ubuntu ARM64 platform,
@@ -236,7 +266,7 @@ providing hardware and OS details for the SBC platform used in the lab.
 <p>
 <img src="images/screenshots/06_suricata_journalctl_service_status.png" alt="Suricata journalctl service status">
 </p>
-Figure 7: Suricata journalctl service status.
+Figure 8: Suricata journalctl service status.
 
 
 The service status proves Suricata is running under systemd. It
@@ -246,7 +276,7 @@ active after the deployment.
 <p>
 <img src="images/screenshots/07_suricata_installation_success.png" alt="Suricata installation success">
 </p>
-Figure 8: Suricata installation details
+Figure 9: Suricata installation details
 
 
 
@@ -413,7 +443,7 @@ segment. All devices behind the gateway benefit from common controls:
   LAN.
 - Protocol and policy enforcement for devices that cannot run local security
   agents.
-- Detection of scanning, brute-force attempts, suspicious DNS behavior, unsafe
+- Detection of scanning, brute-force attempts, suspicious DNS behaviour, unsafe
   plaintext protocols, and unwanted outbound services.
 - A single place to collect alerts, packet captures, counters, and performance
   evidence.
@@ -446,14 +476,14 @@ This is especially useful for devices that only support self-signed
 certificates. The gateway cannot magically make an insecure device interface
 secure, but it can reduce exposure by ensuring that only authorised management
 paths can reach that interface. It can also alert on suspicious access attempts,
-unexpected protocols, brute-force behavior, or data exfiltration patterns.
+unexpected protocols, brute-force behaviour, or data exfiltration patterns.
 
 ### 7.2 Secure Connectivity for Devices Behind the Gateway
 
 Devices behind the same IDS/IPS gateway gain the opportunity to communicate
 through a controlled trust boundary. The gateway can separate normal device
 traffic from administrative traffic, enforce outbound policy, and detect
-unexpected lateral or internet-bound behavior.
+unexpected lateral or internet-bound behaviour.
 
 Examples include:
 
@@ -473,7 +503,15 @@ additional defensive layer that is easier to manage, observe, and update.
 
 ## 8. Validation Harness
 
-The validation harness in `ids_ips_evaluation/` is designed to run from Kali
+The project provides two complementary validation harnesses:
+
+- `basic_ids_ips_evaluation/` is designed for LAN-side rule validation of
+  Suricata modules 20, 30, 40, and 50 from a Kali client inside the protected
+  LAN.
+- `ids_ips_evaluation/` is designed for WAN-side validation, evidence
+  collection, and scoring from a Kali attacker outside the protected network.
+
+The WAN-side harness in `ids_ips_evaluation/` is designed to run from Kali
 Linux as an attacker and evidence collection host.
 
 Its main functions are:
@@ -562,7 +600,7 @@ into a modular validation harness:
 ids_ips_evaluation/
 ├── validation_harness.sh   Main orchestrator
 ├── config/                 Lab, target, scoring, profile, and SID mapping data
-├── attacks/                One attack module per protocol or behavior
+├── attacks/                One attack module per protocol or behaviour
 ├── collectors/             Evidence collection from Kali and gateway
 ├── analysers/              Python scoring and attribution logic
 ├── reports/                HTML, CSV, and aggregate report generation
@@ -714,7 +752,7 @@ A successful deployment should satisfy the following:
 - Enabled IDS rules generate alerts during matching tests.
 - Enabled IPS rules drop matching traffic.
 - The validation harness can collect EVE, stats, PCAP, and performance evidence.
-- The final harness report shows detection and blocking behavior consistent with
+- The final harness report shows detection and blocking behaviour consistent with
   the configured rule modes.
 
 ## 14. Future Work

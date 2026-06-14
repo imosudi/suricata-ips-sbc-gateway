@@ -17,7 +17,7 @@
 #   1. Creates modular rule files in /etc/suricata/rules/available based on inventory.yaml config
 #   2. Each rule file corresponds to a specific protocol or policy area (e.g., HTTP, DNS, policy enforcement)
 #   3. Rules are generated with appropriate actions (alert, drop, pass) based on the mode specified in inventory.yaml
-#   4. Provides a clean separation of rule sets for easier management and customization
+#   4. Provides a clean separation of rule sets for easier management and customisation
 # Note: This playbook focuses on rule deployment. Enabling/disabling rules and managing symlinks in /etc/suricata/rules/enabled is handled separately.
 # =============================================================================
 
@@ -165,10 +165,6 @@
           #   example.com, example.net, example.org
           # mode: {{ suricata_rule_modules["40_tls.rules"].mode | default('ids') }}
           #
-          #
-          # In IPS mode (drop): SNI rules terminate the connection before
-          # the certificate is ever presented. cert_subject rules remain
-          # as alert-only for forensic logging even in IPS mode.
           # =================================================================
           {% set mode   = suricata_rule_modules["40_tls.rules"].mode | default('ids') %}
           {% set action = 'alert' if mode == 'ids' else 'drop' if mode == 'ips' else 'pass' %}
@@ -211,15 +207,6 @@
           # 50_telnet.rules — Telnet Detection
           # Lab requirement: detect/block string "Big Bang Theory" in Telnet
           # mode: {{ suricata_rule_modules["50_telnet.rules"].mode | default('ids') }}
-          #
-          # Telnet (TCP/23) is an unencrypted cleartext protocol.
-          # Suricata 6.x has no dedicated Telnet application-layer decoder,
-          # so raw TCP payload content matching is used instead.
-          #
-          # The bidirectional arrow (<>) on the port spec ensures both
-          # directions of the Telnet stream are inspected:
-          #   client → server: commands typed by the user
-          #   server → client: server banners and output containing the string
           #
           # nocase: case-insensitive match catches "big bang theory",
           #         "BIG BANG THEORY", "Big bang theory", etc.
