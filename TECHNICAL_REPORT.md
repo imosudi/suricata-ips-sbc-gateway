@@ -835,4 +835,13 @@ Figure 11: Curl mioemi.com allowed passes through
 </p>
 Figure 12: Suricata drop confirmed example.com/net/org fast log
 
+###
+To generate PDF version from the Markdown file:
+```bash
+cd suricata-ips-sbc-gateway  
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python generate_pdf.py
+```
 
