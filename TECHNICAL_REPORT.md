@@ -241,7 +241,6 @@ network gateway setup to Suricata installation and rule deployment.
 Figure 5: Suricata rules validation.
 
 
-
 The Suricata rule validation. It shows 84 active
 rules loaded successfully, confirming that the modular rule set was enabled and
 validated before the gateway entered production.
@@ -251,15 +250,12 @@ validated before the gateway entered production.
 Figure 6: SSH gateway connection.
 
 
-
 After deployment, remote access is verified. The SSH connection 
 proves the gateway host is reachable and manageable over the network.
-
 <p>
 <img src="images/screenshots/05_gateway_system_info_ubuntu_arm64.png" alt="Gateway system info">
 </p>
 Figure 7: IPS Gateway system info.
-
 
 The gateway system information clearly indicating Ubuntu ARM64 platform,
 providing hardware and OS details for the SBC platform used in the lab.
@@ -283,8 +279,8 @@ Figure 9: Suricata installation details
 
 The inventory is parameterised through `inventory.yaml` and environment values
 such as `TARGET_IP`, `ANSIBLE_USER`, `ANSIBLE_SSH_KEY`, `WIFI_SSID`, and
-`WIFI_PASSWORD`. A local `.env` file is used for sensitive or environment-
-specific configuration.
+`WIFI_PASSWORD`. A local `.env` file is used for these sensitive information as environmental 
+variables.
 
 ### 4.1 Gateway Provisioning
 
@@ -325,8 +321,10 @@ Its major tasks are:
 The systemd override runs Suricata with a command equivalent to:
 
 ```bash
-/usr/bin/suricata -D -q 0 -c /etc/suricata/suricata.yaml --pidfile /run/suricata.pid
+/usr/bin/suricata -D -q 0 -c /etc/suricata/suricata.yaml \
+     --pidfile /run/suricata.pid
 ```
+<div style="page-break-after: always;"></div>
 
 ### 4.3 Modular Rule Deployment
 
@@ -558,7 +556,9 @@ The harness computes:
 | Latency impact | 20% | Gateway load during attack versus baseline. |
 | False positives | 20% | Alerts generated during benign traffic. |
 
-\n
+
+<div style="page-break-after: always;"></div>
+
 
 Grades are assigned as:
 
@@ -643,13 +643,18 @@ following:
 For this project, the modular harness is the preferred path because it better
 supports repeatable testing, scoring, reporting, and future expansion.
 
+<div style="page-break-after: always;"></div>
+
+
 ## 10. Operational Procedures
 
 ### 10.1 Deploy the Gateway
 
 ```bash
+git clone https://github.com/imosudi/suricata-ips-sbc-gateway.git
+cd suricata-ips-sbc-gateway
 vi inventory.yaml
-vi .env
+vi .env # or mv .env.sample .env; vi .env
 chmod +x main.sh
 sudo ./main.sh
 ```
@@ -806,3 +811,28 @@ impact.
 - [Debian](https://www.debian.org/)
 - [Ubuntu](https://ubuntu.com/)
 - [Kali Linux](https://kali.org/)
+
+## Appendix
+
+###
+Curl hanging TLS blocked example.com/net/org
+
+
+<p>
+<img src="images/screenshots/08_curl_hanging_tls_blocked_example_com_net_org.png" alt="curl hanging TLS blocked example.com/net/org">
+</p>
+Figure 10: Curl hanging TLS blocked example.com/net/org
+
+###
+<p>
+<img src="images/screenshots/09_curl_mioemi_com_allowed_passes_through.png" alt="curl mioemi.com allowed passes through">
+</p>
+Figure 11: Curl mioemi.com allowed passes through
+
+###
+<p>
+<img src="images/screenshots/10_suricata_drop_confirmed_example_com_net_org_fast_log.png" alt="Suricata drop confirmed example.com/net/org fast log">
+</p>
+Figure 12: Suricata drop confirmed example.com/net/org fast log
+
+
