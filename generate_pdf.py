@@ -4,6 +4,7 @@ Generate PDF version of the project technical summary from Markdown.
 
 import os
 import re
+from datetime import date
 from pathlib import Path
 from markdown import markdown
 from weasyprint import HTML, CSS
@@ -143,7 +144,7 @@ def markdown_to_html(md_file):
     <body>
         {html_content}
         <div class="footer">
-            <p>Generated from Markdown (TECHNICAL_REPORT.md) on 2026-05-06 | FH Technikum Wien Security Lab Protocol Project © Mosudi I. O. (https://github.com/imosudi/suricata-ips-sbc-gateway)</p>
+            <p>Generated from Markdown (TECHNICAL_REPORT.md) on {date.today()} | FH Technikum Wien Security Lab Protocol Project © Mosudi I. O. (https://github.com/imosudi/suricata-ips-sbc-gateway)</p>
         </div>
     </body>
     </html>

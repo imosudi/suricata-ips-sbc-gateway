@@ -835,6 +835,8 @@ Figure 11: Curl mioemi.com allowed passes through
 </p>
 Figure 12: Suricata drop confirmed example.com/net/org fast log
 
+<div style="page-break-after: always;"></div>
+
 ###
 To generate PDF version from the Markdown file:
 ```bash
